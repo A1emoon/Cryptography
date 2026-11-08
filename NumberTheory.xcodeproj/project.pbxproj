@@ -800,6 +800,7 @@
 				<string>6643B7D56E549D02A5923B92</string>
 				<string>C2FECDEB1EE39DBC188238D4</string>
 				<string>2F0F6682E47A7588AB29276A</string>
+				<string>E262C0B0D116CB2B09B5E567</string>
 				<string>5DD98EFEB84FD6716B129733</string>
 				<string>0DBF3F772DD098ADD2E83CF9</string>
 				<string>F7B201069F5795F11EB99DB9</string>
@@ -835,6 +836,7 @@
 				<string>5DAB23E35F91C8998582E9B7</string>
 				<string>1C62514A5C3E04857EBD431F</string>
 				<string>9441E3DB8365F509AD72C743</string>
+				<string>ACB506B8B0536B61775B78D0</string>
 				<string>2EF577591505CA825B2CB1B8</string>
 				<string>DDF1ED28E5A45F4F8F5EBD60</string>
 				<string>E5A501D36D9D4EE6A31AFD8F</string>
@@ -1046,6 +1048,7 @@
 				<string>E7E08FE5D76758DD0A39546B</string>
 				<string>A70E822E6E039D93E5F58F59</string>
 				<string>21E9064B670E26096D6D407E</string>
+				<string>8E60949DCC45174D93A039FE</string>
 			</array>
 			<key>isa</key>
 			<string>PBXGroup</string>
@@ -1823,6 +1826,17 @@
 			<key>isa</key>
 			<string>PBXBuildFile</string>
 		</dict>
+		<key>758F6F29F7DA9379F4F4A59B</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.swift</string>
+			<key>path</key>
+			<string>Sources/NumberTheoryCore/Presentation/TonelliLecture.swift</string>
+			<key>sourceTree</key>
+			<string>SOURCE_ROOT</string>
+		</dict>
 		<key>7653259E81F47AA3C3D30EF1</key>
 		<dict>
 			<key>fileRef</key>
@@ -2053,6 +2067,13 @@
 			<key>sourceTree</key>
 			<string>&lt;group&gt;</string>
 		</dict>
+		<key>87714FDDD5F004430414ACE3</key>
+		<dict>
+			<key>fileRef</key>
+			<string>758F6F29F7DA9379F4F4A59B</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
 		<key>87CDCD2060004D5CCC1B6B99</key>
 		<dict>
 			<key>isa</key>
@@ -2119,6 +2140,17 @@
 			<string>5425E202A70C071C75F6AF11</string>
 			<key>isa</key>
 			<string>PBXBuildFile</string>
+		</dict>
+		<key>8E60949DCC45174D93A039FE</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.swift</string>
+			<key>path</key>
+			<string>App/Features/Course/TonelliLectureView.swift</string>
+			<key>sourceTree</key>
+			<string>SOURCE_ROOT</string>
 		</dict>
 		<key>8EC9A00BFD09B3190AC6B222</key>
 		<dict>
@@ -2249,6 +2281,7 @@
 				<string>FA5A8AF066E47506F4BAA394</string>
 				<string>15FF617BB4F0979D296C201E</string>
 				<string>724117BB4AB0E876588854B0</string>
+				<string>FAA396A5AE25AB9690B2945E</string>
 				<string>AEE282FE2441241B5DD1EF9E</string>
 				<string>9A46AB9475DF8144F8E743F7</string>
 				<string>10291A13C49CCD1183D34859</string>
@@ -2293,6 +2326,7 @@
 				<string>67F141F3787F92C548CD5F9E</string>
 				<string>B10292C8DB4B3CE6E030197C</string>
 				<string>09166AEE644CA05A9DA52138</string>
+				<string>87714FDDD5F004430414ACE3</string>
 				<string>76A2F7F587B608D658805D53</string>
 			</array>
 			<key>isa</key>
@@ -2630,6 +2664,13 @@
 		<dict>
 			<key>fileRef</key>
 			<string>48D4C53EEF697DA09158D29E</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
+		<key>ACB506B8B0536B61775B78D0</key>
+		<dict>
+			<key>fileRef</key>
+			<string>758F6F29F7DA9379F4F4A59B</string>
 			<key>isa</key>
 			<string>PBXBuildFile</string>
 		</dict>
@@ -3226,6 +3267,13 @@
 			<key>isa</key>
 			<string>PBXBuildFile</string>
 		</dict>
+		<key>E262C0B0D116CB2B09B5E567</key>
+		<dict>
+			<key>fileRef</key>
+			<string>8E60949DCC45174D93A039FE</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
 		<key>E38EB9D8791DC2778719A77A</key>
 		<dict>
 			<key>fileRef</key>
@@ -3482,6 +3530,7 @@
 			<array>
 				<string>B90CA4BDDE3064A4CEC32560</string>
 				<string>33FFCF206B56D7F46D8BEC24</string>
+				<string>758F6F29F7DA9379F4F4A59B</string>
 			</array>
 			<key>isa</key>
 			<string>PBXGroup</string>
@@ -3785,6 +3834,13 @@
 		<dict>
 			<key>fileRef</key>
 			<string>E7E08FE5D76758DD0A39546B</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
+		<key>FAA396A5AE25AB9690B2945E</key>
+		<dict>
+			<key>fileRef</key>
+			<string>8E60949DCC45174D93A039FE</string>
 			<key>isa</key>
 			<string>PBXBuildFile</string>
 		</dict>

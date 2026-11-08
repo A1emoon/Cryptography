@@ -46,10 +46,12 @@ private struct WatchKeypad: View {
 struct CourseInputView: View {
     @ObservedObject var model: CourseTaskModel
     @State private var i = CourseInputs()
+    @State private var showTonelliExamples = false
     @Environment(\.dismiss) private var dismiss
     private var kind: CourseTask { model.kind }
     var body: some View {
         NavigationStack {
+            ScrollViewReader { proxy in
             Form {
                 Section {
                     Text(kind.formula).font(.system(.caption, design: .serif)).fixedSize(horizontal: false, vertical: true)
@@ -63,6 +65,14 @@ struct CourseInputView: View {
                 fields
                 Section {
                     Button("Пример из конспекта") { let domain = i.polynomials; i = kind.initial; i.polynomials = domain }
+                    if kind == .tonelli {
+                        CourseDisclosureGroup(isExpanded: $showTonelliExamples) {
+                            ForEach(TonelliLectureExample.all) { example in
+                                Button(example.title) { i = example.inputs; showTonelliExamples = false }.accessibilityIdentifier("tonelliExample_"+example.id)
+                            }
+                        } label: { Text("Примеры с пары") }
+                        .id("tonelliExampleSection")
+                    }
                     CourseDisclosureGroup("Параметры") {
                         if kind == .inverse && i.polynomials {
                             Picker("Метод", selection: $i.polyMethod) { ForEach(PolynomialInverseMethod.allCases, id: \.self) { Text($0.title).tag($0) } }
@@ -74,6 +84,12 @@ struct CourseInputView: View {
                     }
                     Button("Решить") { model.solve(i); dismiss() }.buttonStyle(.borderedProminent).accessibilityIdentifier("courseSolve")
                 }
+            }.onChange(of: showTonelliExamples) { _, _ in
+                Task { @MainActor in
+                    await Task.yield()
+                    proxy.scrollTo("tonelliExampleSection", anchor: .top)
+                }
+            }
             }.navigationTitle("Условие")
                 .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Отмена") { dismiss() }.accessibilityIdentifier("closeCourseInput") } }
         }.onAppear { i = model.inputs }

@@ -69,7 +69,7 @@ private struct CourseInputView:View {
                         Picker("Степень",selection:$i.degree){Text("x²").tag(2);Text("x³").tag(3)}.pickerStyle(.segmented).accessibilityIdentifier("rootDegree")
                     }
                     fields
-                    Menu("Примеры из конспектов"){examples}
+                    Menu("Примеры из конспектов"){examples}.accessibilityIdentifier("courseExamples")
                     DisclosureGroup("Дополнительные параметры"){
                         VStack(alignment:.leading,spacing:16){
                             if kind == .order {
@@ -131,8 +131,9 @@ private struct CourseInputView:View {
         }else if kind == .order{
             Button("Практика · P₈₁₂₅(37)"){i=kind.initial;i.a="37";i.m="8125"}
         }else if kind == .tonelli{
-            Button("Квадратное · 15 mod 17"){i=kind.initial;i.a="15";i.p="17";i.degree=2}
-            Button("Кубическое · 13 mod 163"){i=kind.initial}
+            ForEach(TonelliLectureExample.all) { example in
+                Button(example.title) { i=example.inputs }.accessibilityIdentifier("tonelliExample_"+example.id)
+            }
             Button("Нет корней · x³ ≡ 2 (mod 7)"){i=kind.initial;i.a="2";i.p="7";i.degree=3}
         }
     }
@@ -143,6 +144,7 @@ private struct CourseHelpView:View{
     var body:some View{
         StudentDetailSheet(title:kind.title,large:true){
             MathLine(kind.formula)
+            if kind == .tonelli { TonelliLectureHelp() }
             MathExplainedText(text:kind.subtitle+". Основной лист содержит математическую запись. ↗ открывает вычисление в другом месте; ? объясняет эту строку. Термины и ссылки на теоремы открывают справочник с формулами, доказательствами и исходными страницами. Карандаш меняет условие; отмена сохраняет прежнее решение.")
             ReferenceLinks(ids:kind.referenceIDs,prefix:"algorithmReference_")
         }

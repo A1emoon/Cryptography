@@ -4,8 +4,8 @@ final class WatchSmokeTests: XCTestCase {
     override func setUpWithError() throws { continueAfterFailure = false }
     @MainActor private func find(_ app: XCUIApplication, _ id: String) -> XCUIElement { app.descendants(matching: .any).matching(identifier: id).firstMatch }
     @MainActor private func advance(_ app: XCUIApplication) {
-        let start=app.coordinate(withNormalizedOffset:CGVector(dx:0.5,dy:0.62))
-        let end=app.coordinate(withNormalizedOffset:CGVector(dx:0.5,dy:0.47))
+        let start=app.coordinate(withNormalizedOffset:CGVector(dx:0.94,dy:0.62))
+        let end=app.coordinate(withNormalizedOffset:CGVector(dx:0.94,dy:0.47))
         start.press(forDuration:0.05,thenDragTo:end,withVelocity:.slow,thenHoldForDuration:0.3)
     }
     @MainActor private func visibleRow(_ app: XCUIApplication, _ element: XCUIElement) -> CGRect? {
@@ -175,22 +175,17 @@ final class WatchSmokeTests: XCTestCase {
     }
     @MainActor func testAuxiliaryWindowsAndNestedMultiplicationAreReadable() {
         let app=XCUIApplication();app.launch();tapRow(app,"task_tonelli")
-        XCTAssertTrue(find(app,"tonelliCriterion").waitForExistence(timeout:15))
-        let lhs=find(app,"tonelliCriterion_work_0"),rhs=find(app,"tonelliCriterion_part_2")
-        XCTAssertEqual(lhs.frame.midY,rhs.frame.midY,accuracy:18,"Equalities must remain in one horizontal row")
-        tapMath(app,"tonelliCriterion_work_0")
-        XCTAssertTrue(app.staticTexts["Вспомогательное вычисление степени"].waitForExistence(timeout:8))
-        capture("Часы — окно степени с видимым текстом")
-        tapMath(app,"powerProduct_0_work_2")
-        XCTAssertTrue(find(app,"notebookIntegerTable").waitForExistence(timeout:10))
-        capture("Часы — вложенное удвоение сложение")
+        XCTAssertTrue(find(app,"tonelliCriterion_square_2").waitForExistence(timeout:15))
+        XCTAssertTrue(find(app,"tonelliCriterion_square_32").exists)
+        XCTAssertFalse(find(app,"tonelliCriterion_work_0").exists)
+        capture("Часы — последовательные квадраты видны сразу")
+        tapMath(app,"tonelliCriterion_square_2_work_0")
+        XCTAssertTrue(app.staticTexts["Удвоение–сложение"].waitForExistence(timeout:8))
+        XCTAssertTrue(find(app,"notebookIntegerTable").waitForExistence(timeout:8))
+        capture("Часы — отдельно только таблица умножения")
         find(app,"closeStudentDetail").tap()
-        XCTAssertTrue(app.staticTexts["Вспомогательное вычисление степени"].waitForExistence(timeout:8))
-        find(app,"closeStudentDetail").tap()
-        XCTAssertTrue(find(app,"tonelliCriterion").waitForExistence(timeout:8))
-        tapMath(app,"tonelliCriterion_reason")
-        XCTAssertTrue(app.staticTexts["Проверка существования корней"].waitForExistence(timeout:8))
-        capture("Часы — пояснение шага с видимым текстом")
+        XCTAssertTrue(find(app,"tonelliCriterion_square_2").waitForExistence(timeout:8))
+        XCTAssertEqual(find(app,"answer_tonelli").label,"19, 20, 124")
     }
     @MainActor func testMatricesAndTheoremEqualitiesStayOnOneLine() {
         let app=XCUIApplication();app.launch();tapRow(app,"task_inverse")
@@ -223,6 +218,21 @@ final class WatchSmokeTests: XCTestCase {
             XCTAssertTrue(find(app,"studentSolution").waitForExistence(timeout:8))
             app.terminate()
         }
+    }
+
+    @MainActor func testTonelliLectureDescentAndSharedExamples() {
+        let app=XCUIApplication();app.launch();tapRow(app,"task_tonelli")
+        XCTAssertTrue(find(app,"tonelliCriterion_square_2").waitForExistence(timeout:15))
+        for id in ["tonelliOrder_0","tonelliOrder_1","tonelliIdentity_0","tonelliRegroup_1","tonelliExtract"] { XCTAssertTrue(find(app,id).exists,id) }
+        XCTAssertEqual(find(app,"answer_tonelli").label,"19, 20, 124")
+        capture("Часы — все основные вычисления на листе")
+        pageAction(app,"courseInput","Изменить условие")
+        reach(app,"Примеры с пары");app.buttons["Примеры с пары"].firstMatch.tap();tapRow(app,"tonelliExample_2_5_41")
+        reach(app,"courseSolve");find(app,"courseSolve").tap()
+        XCTAssertTrue(find(app,"tonelliCriterion").waitForExistence(timeout:15))
+        XCTAssertFalse(find(app,"tonelliCriterion_work_0").exists)
+        XCTAssertEqual(find(app,"answer_tonelli").label,"13, 28")
+        capture("Часы — символ Лежандра со всеми преобразованиями")
     }
 
 }

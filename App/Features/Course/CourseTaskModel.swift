@@ -139,3 +139,23 @@ enum CourseResult: Sendable {
     }
     func cancel(){worker?.cancel();worker=nil;generation=UUID();calculating=false}
 }
+
+
+/// One set of lecture examples for the phone and watch input panels.
+struct TonelliLectureExample: Identifiable {
+    let a: String
+    let p: String
+    let degree: Int
+    var id: String { "\(degree)_\(a)_\(p)" }
+    var title: String { "x\(degree == 2 ? "²" : "³") ≡ \(a) (mod \(p))" }
+    var inputs: CourseInputs {
+        var value = CourseTask.tonelli.initial
+        value.a = a; value.p = p; value.degree = degree
+        return value
+    }
+    static let all = [
+        Self(a:"5",p:"41",degree:2), Self(a:"6",p:"97",degree:2),
+        Self(a:"3",p:"73",degree:3), Self(a:"13",p:"163",degree:3),
+        Self(a:"17",p:"163",degree:3), Self(a:"267",p:"487",degree:3), Self(a:"26",p:"487",degree:3)
+    ]
+}

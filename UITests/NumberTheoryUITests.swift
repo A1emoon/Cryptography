@@ -21,14 +21,17 @@ final class NumberTheoryUITests:XCTestCase {
   scroll(app,"answer_order");XCTAssertEqual(find(app,"answer_order").label,"100");capture("Порядок — НОК и ответ")
  }
  @MainActor func testTonelliCubeSquareAndReasons()throws{
-  let app=XCUIApplication();open(app,"tonelli");XCTAssertFalse(find(app,"notebookIntegerTable").exists);capture("Тонелли — начало студенческого решения")
-  find(app,"tonelliCriterion_reason").tap();XCTAssertTrue(app.staticTexts["Проверка существования корней"].waitForExistence(timeout:5));capture("Тонелли — пояснение дробного показателя");close(app)
-  find(app,"tonelliCriterion_work_0").tap();XCTAssertTrue(app.staticTexts["Вспомогательное вычисление степени"].waitForExistence(timeout:5));scroll(app,"powerProduct_0_work_2");find(app,"powerProduct_0_work_2").tap();XCTAssertTrue(find(app,"notebookIntegerTable").waitForExistence(timeout:10));capture("Тонелли — вложенная таблица");close(app);close(app)
-  scroll(app,"tonelliCorrection_1");capture("Тонелли — понижение порядка")
-  scroll(app,"answer_tonelli");XCTAssertEqual(find(app,"answer_tonelli").label,"19, 20, 124");capture("Тонелли — все кубические корни")
-  find(app,"courseInput").tap();replace(app,"input_a","15");replace(app,"input_p","17");app.segmentedControls["rootDegree"].buttons["x²"].tap();solve(app)
-  scroll(app,"answer_tonelli");XCTAssertEqual(find(app,"answer_tonelli").label,"7, 10");capture("Тонелли — квадратное сравнение")
-  find(app,"courseInput").tap();replace(app,"input_a","0");find(app,"closeCourseInput").tap();XCTAssertEqual(find(app,"answer_tonelli").label,"7, 10")
+  let app=XCUIApplication();open(app,"tonelli")
+  XCTAssertTrue(find(app,"tonelliCriterion_square_2").waitForExistence(timeout:8))
+  XCTAssertTrue(find(app,"tonelliCriterion_square_32").exists)
+  XCTAssertTrue(find(app,"tonelliCriterion").exists)
+  XCTAssertFalse(find(app,"tonelliCriterion_work_0").exists)
+  capture("Тонелли — последовательные квадраты на основном листе")
+  scroll(app,"tonelliCriterion_square_2_work_0");find(app,"tonelliCriterion_square_2_work_0").tap()
+  XCTAssertTrue(app.staticTexts["Удвоение–сложение"].waitForExistence(timeout:5))
+  XCTAssertTrue(find(app,"notebookIntegerTable").waitForExistence(timeout:8));capture("Тонелли — только умножение на отдельном листе");close(app)
+  scroll(app,"tonelliCriterion_reason");find(app,"tonelliCriterion_reason").tap();XCTAssertTrue(app.staticTexts["Проверка существования корней"].waitForExistence(timeout:5));close(app)
+  XCTAssertEqual(find(app,"answer_tonelli").label,"19, 20, 124")
  }
  @MainActor func testCombinedInverseNumbersAndPolynomials()throws{
   let app=XCUIApplication();open(app,"inverse");capture("Обращение — нечётный модуль")
@@ -66,5 +69,19 @@ final class NumberTheoryUITests:XCTestCase {
   find(app,"doublingPreparation_work_0").tap();XCTAssertTrue(find(app,"productResult").waitForExistence(timeout:10));XCTAssertEqual(find(app,"productResult").label,"1");capture("Остаток — отдельное вспомогательное вычисление");close(app)
   scroll(app,"answer_doubling");XCTAssertEqual(find(app,"answer_doubling").label,"5")
  }
+
+ @MainActor func testTonelliPhotographedLectureAndExamplePicker() throws {
+  let app=XCUIApplication();open(app,"tonelli")
+  for id in ["tonelliOrder_0","tonelliOrder_1","tonelliIdentity_0","tonelliRegroup_1","tonelliExtract"] {XCTAssertTrue(find(app,id).exists,id)}
+  scroll(app,"tonelliCriterion_reason");capture("Тонелли — полная цепочка критерия")
+  scroll(app,"tonelliIdentity_0_reason");capture("Тонелли — подстановка B и сложение показателей без скрытых шагов")
+  XCTAssertEqual(find(app,"answer_tonelli").label,"19, 20, 124")
+  find(app,"courseInput").tap();scroll(app,"courseExamples");find(app,"courseExamples").tap();find(app,"tonelliExample_2_5_41").tap();solve(app)
+  XCTAssertTrue(find(app,"tonelliCriterion").exists)
+  XCTAssertFalse(find(app,"tonelliCriterion_work_0").exists)
+  capture("Тонелли — цепочка символа Лежандра на основном листе")
+  XCTAssertEqual(find(app,"answer_tonelli").label,"13, 28")
+ }
+
 
 }

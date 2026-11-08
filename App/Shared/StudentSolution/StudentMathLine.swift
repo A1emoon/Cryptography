@@ -36,6 +36,7 @@ struct StudentFraction: View {
 private struct StudentMathToken: View {
     let atom: StudentMathAtom
     let isLink: Bool
+    var unwrapped = false
     let action: () -> Void
     @ViewBuilder private var mathematicalText: some View {
         switch atom {
@@ -68,6 +69,8 @@ private struct StudentMathToken: View {
         }.fixedSize().padding(.vertical, 6)
     }
     var body: some View {
+        if unwrapped { token.fixedSize() }
+        else {
         #if os(watchOS)
         token.fixedSize()
         #else
@@ -76,6 +79,7 @@ private struct StudentMathToken: View {
             ScrollView(.horizontal) { token.fixedSize() }.frame(height: overflowHeight)
         }
         #endif
+        }
     }
     private var overflowHeight: CGFloat {
         #if os(watchOS)
@@ -152,6 +156,7 @@ struct StudentMathLine: View {
     let identifier: String
     let onWork: (Int) -> Void
     let onReason: () -> Void
+    var singleRow = false
     private var groups: [[Int]] {
         var result: [[Int]] = [], i = 0
         while i < atoms.count {
@@ -163,6 +168,17 @@ struct StudentMathLine: View {
     }
     var body: some View {
         HStack(alignment: .top, spacing: 7) {
+            if singleRow {
+                ScrollView(.horizontal) {
+                    HStack(spacing: 6) {
+                        ForEach(atoms.indices, id: \.self) { index in
+                            StudentMathToken(atom: atoms[index], isLink: workIndices.contains(index), unwrapped: true, action: { onWork(index) })
+                                .accessibilityIdentifier(workIndices.contains(index) ? "\(identifier)_work_\(index)" : "\(identifier)_part_\(index)")
+                        }
+                    }.fixedSize().padding(.vertical, 3)
+                }.scrollIndicators(.visible).frame(maxWidth: .infinity, alignment: .leading)
+                    .accessibilityIdentifier(identifier + "_scroll")
+            } else {
             #if os(watchOS)
             HStack(spacing: 6) {
                 ForEach(atoms.indices, id: \.self) { index in
@@ -182,6 +198,7 @@ struct StudentMathLine: View {
                 }
             }.frame(maxWidth: .infinity, alignment: .leading)
             #endif
+            }
             Button(action: onReason) {
                 Image(systemName: "questionmark.circle").font(.system(size: 15))
                     .foregroundStyle(AppStyle.accent.opacity(0.8)).frame(width: 32, height: 38)

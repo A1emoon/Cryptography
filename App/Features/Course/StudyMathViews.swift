@@ -11,13 +11,15 @@ struct StudyReasonView: View {
     var body:some View {
         StudentDetailSheet(title:reason.title,large:true){
             MathExplainedText(text:reason.text)
-            ForEach(reason.equations.indices,id:\.self){MathLine(reason.equations[$0])}
+            ForEach(reason.equations.indices,id:\.self){StudentFormulaView(atoms:[.rich(reason.equations[$0])])}
             ReferenceLinks(ids:reason.references,prefix:"stepReference_")
         }
     }
 }
 indirect enum StudyWork {
     case power(RecordedPower)
+    case symbol(LegendreTrace)
+    case notation(String, [String])
     case product(String,String,String)
     case conversion(BinaryConversion)
     case factorization(FactorizationTrace)
@@ -34,9 +36,10 @@ struct StudyLine:View {
     let atoms:[StudentMathAtom]
     let reason:StudyReason
     var works:[Int:StudyWork]=[:]
+    var singleRow = false
     @State private var window:StudyWindow?
     var body:some View {
-        StudentMathLine(atoms:atoms,workIndices:Set(works.keys),identifier:id,onWork:{if let w=works[$0]{window = .work(w)}},onReason:{window = .reason})
+        StudentMathLine(atoms:atoms,workIndices:Set(works.keys),identifier:id,onWork:{if let w=works[$0]{window = .work(w)}},onReason:{window = .reason},singleRow:singleRow)
             .sheet(item:$window){switch $0{case .reason:StudyReasonView(reason:reason);case .work(let work):StudyWorkView(work:work)}}
     }
 }
@@ -59,6 +62,8 @@ struct StudyWorkView:View {
     private var title:String {
         switch work{
         case .power:"Вспомогательное вычисление степени"
+        case .symbol:"Вычисление символа"
+        case .notation(let title,_):title
         case .product:"Удвоение–сложение"
         case .conversion:"Перевод в двоичную систему"
         case .factorization:"Разложение модуля"
@@ -71,6 +76,9 @@ struct StudyWorkView:View {
         StudentDetailSheet(title:title,large:true){
             switch work{
             case .power(let p):StudyPowerCalculation(power:p)
+            case .symbol(let s):LegendreTraceView(trace:s)
+            case .notation(_,let equations):
+                ForEach(equations.indices,id:\.self) { i in StudentFormulaView(atoms:[.rich(equations[i])]) }
             case .product(let a,let b,let m):StudyIntegerProduct(a:a,b:b,m:m)
             case .conversion(let c):NotebookBinaryConversion(conversion:c)
             case .factorization(let f):
