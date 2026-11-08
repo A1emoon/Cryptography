@@ -163,7 +163,7 @@ struct RabinPolynomialProduct: View {
         VStack(alignment: .leading, spacing: 16) {
             if let table {
                 NotebookPolynomialView(solution: table, variable: "x")
-                DisclosureGroup("Как получены верхние ячейки") {
+                CourseDisclosureGroup("Как получены верхние ячейки") {
                     VStack(alignment: .leading, spacing: 16) {
                         ForEach(table.columns) { column in
                             ScrollView(.horizontal) { PolynomialStepView(step: column.scaling, p: q) }

@@ -81,7 +81,7 @@ private struct NotebookCongruence: View {
         }.fixedSize()
     }
 }
-private struct NotebookMatrix: View {
+struct NotebookMatrix: View {
     let rows: [ModularRow]
     let powers: Bool
     var body: some View {

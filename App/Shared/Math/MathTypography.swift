@@ -6,7 +6,7 @@ struct MathLine: View {
     var body: some View {
         ScrollView(.horizontal) {
             MathText(text: text).fixedSize()
-                .textSelection(.enabled).padding(.vertical, 8)
+                .courseTextSelection().padding(.vertical, 8)
         }
         .scrollIndicators(.visible)
     }

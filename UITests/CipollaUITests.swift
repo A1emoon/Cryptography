@@ -15,16 +15,15 @@ final class CipollaUITests: XCTestCase {
     @MainActor private func capture(_ name: String) {
         let a = XCTAttachment(screenshot: XCUIScreen.main.screenshot()); a.name = name; a.lifetime = .keepAlways; add(a)
     }
-    @MainActor private func close(_ app: XCUIApplication) { app.buttons["closeStudentDetail"].firstMatch.tap() }
-    @MainActor private func replace(_ app: XCUIApplication, _ id: String, _ value: String) {
-        let e = find(app,id); scroll(app,id); e.tap()
-        e.coordinate(withNormalizedOffset: CGVector(dx: 0.98, dy: 0.5)).tap()
-        let old = e.value as? String ?? ""
-        // Empty optional fields expose the placeholder as their accessibility value.
-        let count = old.hasPrefix("Автоматически") ? 0 : old.count
-        e.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: count) + value)
-        if !value.isEmpty { XCTAssertEqual(e.value as? String, value) }
-        if app.buttons["Готово"].exists { app.buttons["Готово"].firstMatch.tap() }
+    @MainActor private func close(_ app: XCUIApplication) {
+        let button=app.buttons.matching(identifier:"closeStudentDetail").allElementsBoundByIndex.first { $0.isHittable }
+        XCTAssertNotNil(button); button?.tap()
+    }
+    @MainActor private func replace(_ app:XCUIApplication,_ id:String,_ value:String){
+        let clear="clear_"+id.replacingOccurrences(of:"input_",with:"")
+        scroll(app,clear);find(app,clear).tap()
+        if !value.isEmpty{find(app,id).typeText(value);XCTAssertEqual(find(app,id).value as? String,value)}
+        if app.buttons["Готово"].exists{app.buttons["Готово"].firstMatch.tap()}
     }
     @MainActor private func solve(_ app: XCUIApplication, _ a: String, _ p: String, _ delta: String = "") {
         app.buttons["cipollaInput"].tap()
@@ -44,14 +43,14 @@ final class CipollaUITests: XCTestCase {
         XCTAssertTrue(app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@", "108 · 28")).firstMatch.exists)
         capture("Чиполла — объяснение дробного показателя")
         scroll(app,"cipollaTerm_reciprocity"); find(app,"cipollaTerm_reciprocity").tap()
-        XCTAssertTrue(app.staticTexts["Закон квадратичной взаимности"].waitForExistence(timeout: 5))
+        XCTAssertTrue(find(app,"theoremPaper").waitForExistence(timeout: 5))
         capture("Чиполла — определение термина")
         close(app); close(app); close(app)
         scroll(app,"cipolla_exponent_reason"); capture("Чиполла — выбор δ и дробная степень")
         find(app,"cipolla_exponent_reason").tap()
         XCTAssertTrue(app.staticTexts["Почему показатель 55"].waitForExistence(timeout: 5))
         scroll(app,"cipollaTerm_conjugate"); find(app,"cipollaTerm_conjugate").tap()
-        XCTAssertTrue(app.staticTexts["Сопряжённые элементы и норма"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.otherElements["definitionPaper"].waitForExistence(timeout: 5))
         close(app); close(app)
         scroll(app,"cipolla_binary_work_2"); find(app,"cipolla_binary_work_2").tap()
         XCTAssertTrue(app.staticTexts["Перевод показателя в двоичную систему"].waitForExistence(timeout: 5)); close(app)

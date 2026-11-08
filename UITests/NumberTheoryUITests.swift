@@ -1,403 +1,70 @@
 import XCTest
 
-final class NumberTheoryUITests: XCTestCase {
-    override func setUpWithError() throws {
-        continueAfterFailure = false
-    }
-    @MainActor
-    func testDefaultSolutionAndAlgorithmDescription() throws {
-        let app = XCUIApplication()
-        app.launch()
-        app.buttons["task_doubling"].tap()
-        XCTAssertTrue(app.otherElements["doublingFormula"].exists || app.staticTexts["r = (a · b) mod m"].exists)
-        XCTAssertTrue(app.buttons["algorithmInfo"].waitForExistence(timeout: 10))
-        capture("Главный экран")
-        app.buttons["algorithmInfo"].tap()
-        XCTAssertTrue(app.staticTexts["Как это работает"].waitForExistence(timeout: 5))
-        capture("Описание алгоритма")
-        app.buttons["closeAlgorithm"].tap()
-        scrollToAnswer(app)
-        XCTAssertEqual(app.staticTexts["answer"].label, "117")
-        capture("Таблица и ответ")
-        XCTAssertTrue(app.staticTexts["doublingFactor"].exists)
-    }
+final class NumberTheoryUITests:XCTestCase {
+ override func setUpWithError()throws{continueAfterFailure=false}
+ @MainActor private func find(_ app:XCUIApplication,_ id:String)->XCUIElement{app.descendants(matching:.any)[id].firstMatch}
+ @MainActor private func scroll(_ app:XCUIApplication,_ id:String,down:Bool=false){let e=find(app,id);for _ in 0..<40{if e.isHittable{return};if down{app.swipeDown()}else{app.swipeUp()}};XCTAssertTrue(e.isHittable,id)}
+ @MainActor private func capture(_ name:String){let a=XCTAttachment(screenshot:XCUIScreen.main.screenshot());a.name=name;a.lifetime = .keepAlways;add(a)}
+ @MainActor private func close(_ app:XCUIApplication){app.buttons["closeStudentDetail"].firstMatch.tap()}
+ @MainActor private func replace(_ app:XCUIApplication,_ id:String,_ value:String){let clear="clear_"+id.replacingOccurrences(of:"input_",with:"");scroll(app,clear);find(app,clear).tap();if !value.isEmpty{find(app,id).typeText(value);XCTAssertEqual(find(app,id).value as? String,value)};if app.buttons["Готово"].exists{app.buttons["Готово"].firstMatch.tap()}}
 
-    @MainActor
-    private func capture(_ name: String) {
-        let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
-        attachment.name = name
-        attachment.lifetime = .keepAlways
-        add(attachment)
-    }
+ @MainActor private func open(_ app:XCUIApplication,_ id:String){app.launch();scroll(app,"task_"+id);find(app,"task_"+id).tap();XCTAssertTrue(find(app,"studentSolution").waitForExistence(timeout:15))}
+ @MainActor private func solve(_ app:XCUIApplication){scroll(app,"courseSolve");find(app,"courseSolve").tap();XCTAssertTrue(find(app,"studentSolution").waitForExistence(timeout:15))}
+ @MainActor func testFirstTasksOrderAndNestedCalculation()throws{
+  let app=XCUIApplication();app.launch();capture("Задачи — приоритетные три")
+  XCTAssertTrue(find(app,"task_inverse").isHittable);XCTAssertTrue(find(app,"task_order").exists);XCTAssertTrue(find(app,"task_tonelli").exists)
+  find(app,"task_order").tap();XCTAssertTrue(find(app,"studentSolution").waitForExistence(timeout:15))
+  XCTAssertFalse(app.segmentedControls["solutionStyle"].exists)
+  find(app,"orderFactorization_work_0").tap();XCTAssertTrue(app.staticTexts["Разложение модуля"].waitForExistence(timeout:5));capture("Порядок — факторизация отдельно");close(app)
+  scroll(app,"order_trial_5_4_2_0_work_1")
+  find(app,"order_trial_5_4_2_0_work_1").tap();XCTAssertTrue(app.staticTexts["Вспомогательное вычисление степени"].waitForExistence(timeout:5));close(app)
+  scroll(app,"answer_order");XCTAssertEqual(find(app,"answer_order").label,"100");capture("Порядок — НОК и ответ")
+ }
+ @MainActor func testTonelliCubeSquareAndReasons()throws{
+  let app=XCUIApplication();open(app,"tonelli");XCTAssertFalse(find(app,"notebookIntegerTable").exists);capture("Тонелли — начало студенческого решения")
+  find(app,"tonelliCriterion_reason").tap();XCTAssertTrue(app.staticTexts["Проверка существования корней"].waitForExistence(timeout:5));capture("Тонелли — пояснение дробного показателя");close(app)
+  find(app,"tonelliCriterion_work_0").tap();XCTAssertTrue(app.staticTexts["Вспомогательное вычисление степени"].waitForExistence(timeout:5));scroll(app,"powerProduct_0_work_2");find(app,"powerProduct_0_work_2").tap();XCTAssertTrue(find(app,"notebookIntegerTable").waitForExistence(timeout:10));capture("Тонелли — вложенная таблица");close(app);close(app)
+  scroll(app,"tonelliCorrection_1");capture("Тонелли — понижение порядка")
+  scroll(app,"answer_tonelli");XCTAssertEqual(find(app,"answer_tonelli").label,"19, 20, 124");capture("Тонелли — все кубические корни")
+  find(app,"courseInput").tap();replace(app,"input_a","15");replace(app,"input_p","17");app.segmentedControls["rootDegree"].buttons["x²"].tap();solve(app)
+  scroll(app,"answer_tonelli");XCTAssertEqual(find(app,"answer_tonelli").label,"7, 10");capture("Тонелли — квадратное сравнение")
+  find(app,"courseInput").tap();replace(app,"input_a","0");find(app,"closeCourseInput").tap();XCTAssertEqual(find(app,"answer_tonelli").label,"7, 10")
+ }
+ @MainActor func testCombinedInverseNumbersAndPolynomials()throws{
+  let app=XCUIApplication();open(app,"inverse");capture("Обращение — нечётный модуль")
+  scroll(app,"answer_inverse");XCTAssertEqual(find(app,"answer_inverse").label,"2")
+  find(app,"courseInput").tap();app.segmentedControls["inverseDomain"].buttons["Многочлены"].tap();solve(app)
+  XCTAssertTrue(find(app,"polyInverseFrame_0").exists);capture("Обращение — многочлены")
+  scroll(app,"answer_inverse");XCTAssertEqual(find(app,"answer_inverse").label,"5α³ + 5α² + 2α + 1");capture("Обращение — результат по практике")
+  find(app,"courseInput").tap();app.segmentedControls["inverseDomain"].buttons["Числа"].tap();replace(app,"input_a","113");replace(app,"input_m","512");solve(app);capture("Обращение — начальная матрица степени двойки")
+  scroll(app,"modularFrame_1");capture("Обращение — только первая строка")
+  scroll(app,"answer_inverse");XCTAssertEqual(find(app,"answer_inverse").label,"145")
+ }
+ @MainActor func testOriginalArithmeticUsesUnifiedSheet()throws{
+  for (id,answer) in [("doubling","117"),("division","1530 = 41 · 37 + 13"),("modular_division","72"),("polynomial","3α³ + α²")] {
+   let app=XCUIApplication();open(app,id);XCTAssertFalse(app.segmentedControls["solutionStyle"].exists);capture(id+" — студенческая запись")
+   let key="answer_"+(id=="modular_division" ? "modularDivision":id)
+   scroll(app,key);XCTAssertEqual(find(app,key).label,answer);capture(id+" — ответ");app.terminate()
+  }
+ }
+ @MainActor func testLibrarySearchProofAndOfflineSource()throws{
+  let app=XCUIApplication();app.launch();app.tabBars.buttons["Определения"].tap()
+  let search=app.searchFields.firstMatch;XCTAssertTrue(search.waitForExistence(timeout:5));search.tap();search.typeText("порядок\n");XCTAssertTrue(find(app,"reference_order").waitForExistence(timeout:5));scroll(app,"reference_order");find(app,"reference_order").tap();XCTAssertTrue(find(app,"definitionPaper").waitForExistence(timeout:5));capture("Определения — поиск и статья")
+  app.navigationBars.buttons.element(boundBy:0).tap();app.tabBars.buttons["Теоремы"].tap();let theoremSearch=app.searchFields.firstMatch;theoremSearch.tap();theoremSearch.typeText("Тонелли");scroll(app,"reference_tonelli-nonresidue");find(app,"reference_tonelli-nonresidue").tap();scroll(app,"referenceProof");capture("Теоремы — доказательство")
+  find(app,"theoremSources").tap();scroll(app,"source_L7_5");find(app,"source_L7_5").tap();XCTAssertTrue(find(app,"referencePDF").waitForExistence(timeout:10));XCTAssertEqual(find(app,"referencePDF").value as? String,"1");capture("Исходный PDF — без интернета");find(app,"closeReferenceSource").tap()
+ }
+ @MainActor func testSignedInputZeroAndRejectedModulus()throws{
+  let app=XCUIApplication();open(app,"doubling");find(app,"courseInput").tap();replace(app,"input_a","-1000");replace(app,"input_b","1");solve(app);scroll(app,"answer_doubling");XCTAssertEqual(find(app,"answer_doubling").label,"92")
+  find(app,"courseInput").tap();replace(app,"input_m","0");scroll(app,"courseSolve");find(app,"courseSolve").tap();XCTAssertTrue(find(app,"inputError").waitForExistence(timeout:10));XCTAssertFalse(find(app,"answer_doubling").exists)
+  app.terminate();open(app,"tonelli");find(app,"courseInput").tap();replace(app,"input_a","2");replace(app,"input_p","7");solve(app);scroll(app,"answer_tonelli");XCTAssertEqual(find(app,"answer_tonelli").label,"Решений нет")
+  find(app,"courseInput").tap();replace(app,"input_a","0");solve(app);scroll(app,"answer_tonelli");XCTAssertEqual(find(app,"answer_tonelli").label,"0")
+ }
 
-    @MainActor
-    func testNegativeInputOneAndInvalidModulus() throws {
-        let app = XCUIApplication()
-        app.launch()
-        app.buttons["task_doubling"].tap()
-        replace(app, field: "a", with: "-1000")
-        replace(app, field: "b", with: "1")
-        app.buttons["solve"].tap()
-        scrollToAnswer(app)
-        XCTAssertEqual(app.staticTexts["answer"].label, "92")
-        for _ in 0..<5 { app.swipeDown() }
-        replace(app, field: "m", with: "0")
-        app.buttons["solve"].tap()
-        XCTAssertTrue(app.staticTexts["inputError"].waitForExistence(timeout: 5))
-        XCTAssertFalse(app.staticTexts["answer"].exists)
-    }
+ @MainActor func testPreparationReductionStaysOutsideMainSheet()throws{
+  let app=XCUIApplication();open(app,"doubling");find(app,"courseInput").tap();replace(app,"input_m","7");solve(app)
+  XCTAssertEqual(app.descendants(matching:.any).matching(identifier:"notebookIntegerTable").count,1)
+  find(app,"doublingPreparation_work_0").tap();XCTAssertTrue(find(app,"productResult").waitForExistence(timeout:10));XCTAssertEqual(find(app,"productResult").label,"1");capture("Остаток — отдельное вспомогательное вычисление");close(app)
+  scroll(app,"answer_doubling");XCTAssertEqual(find(app,"answer_doubling").label,"5")
+ }
 
-    @MainActor
-    func testDivisionClassExampleAndNavigation() throws {
-        let app = XCUIApplication()
-        app.launch()
-        XCTAssertTrue(app.buttons["task_division"].waitForExistence(timeout: 10))
-        capture("Выбор задания")
-        app.buttons["task_division"].tap()
-        XCTAssertTrue(app.staticTexts["a = b · q + r"].exists)
-        capture("Формула и ввод деления")
-        app.buttons["algorithmInfo"].tap()
-        XCTAssertTrue(app.staticTexts["Деление с остатком"].waitForExistence(timeout: 5))
-        app.buttons["closeAlgorithm"].tap()
-        scrollTo(app, identifier: "divisionStep_0")
-        capture("Шаг двоичного деления")
-        scrollTo(app, identifier: "divisionQuotient")
-        XCTAssertEqual(app.staticTexts["divisionQuotient"].label, "q = 37")
-        XCTAssertEqual(app.staticTexts["divisionRemainder"].label, "r = 13")
-        capture("Ответ двоичного деления")
-        app.navigationBars.buttons.element(boundBy: 0).tap()
-        XCTAssertTrue(app.buttons["task_doubling"].waitForExistence(timeout: 5))
-    }
-
-    @MainActor
-    func testDivisionInputAndZeroDivisor() throws {
-        let app = XCUIApplication()
-        app.launch()
-        app.buttons["task_division"].tap()
-        replace(app, field: "a", with: "13")
-        replace(app, field: "b", with: "7")
-        app.buttons["solve"].tap()
-        scrollTo(app, identifier: "divisionQuotient")
-        XCTAssertEqual(app.staticTexts["divisionQuotient"].label, "q = 1")
-        XCTAssertEqual(app.staticTexts["divisionRemainder"].label, "r = 6")
-        for _ in 0..<7 { app.swipeDown() }
-        replace(app, field: "b", with: "0")
-        app.buttons["solve"].tap()
-        XCTAssertTrue(app.staticTexts["inputError"].waitForExistence(timeout: 5))
-        XCTAssertFalse(app.staticTexts["divisionQuotient"].exists)
-    }
-
-    @MainActor
-    func testModularInverseMethodsAndDescription() throws {
-        let app = XCUIApplication()
-        app.launch()
-        scrollTo(app, identifier: "task_inverse")
-        capture("Четыре задачи")
-        app.buttons["task_inverse"].tap()
-        XCTAssertTrue(app.buttons["algorithmInfo"].waitForExistence(timeout: 5))
-        capture("Ввод обращения")
-        app.buttons["algorithmInfo"].tap()
-        XCTAssertTrue(app.staticTexts["Сначала — деление пополам"].waitForExistence(timeout: 5))
-        app.buttons["closeAlgorithm"].tap()
-        scrollTo(app, identifier: "jumpToModularAnswer")
-        app.buttons["jumpToModularAnswer"].tap()
-        XCTAssertTrue(app.staticTexts["modularAnswer"].waitForExistence(timeout: 10))
-        XCTAssertTrue(app.staticTexts["modularAnswer"].isHittable)
-        XCTAssertEqual(app.staticTexts["modularAnswer"].label, "145")
-        capture("Ответ обращения")
-        app.buttons["closeModularAnswer"].tap()
-        scrollTo(app, identifier: "modularFrame_1")
-        capture("Матрица обращения и нулевые строки")
-        scrollBackTo(app, identifier: "modularMethod")
-        app.buttons["modularMethod"].tap()
-        app.buttons["По степеням двойки"].tap()
-        app.buttons["solve"].tap()
-        scrollTo(app, identifier: "liftStage_0")
-        capture("Подъём по степеням двойки")
-        scrollBackTo(app, identifier: "jumpToModularAnswer")
-        app.buttons["jumpToModularAnswer"].tap()
-        XCTAssertEqual(app.staticTexts["modularAnswer"].label, "145")
-        app.buttons["closeModularAnswer"].tap()
-        scrollBackTo(app, identifier: "input_m")
-        replace(app, field: "m", with: "15")
-        scrollTo(app, identifier: "solve")
-        app.buttons["solve"].tap()
-        XCTAssertTrue(app.staticTexts["inputError"].waitForExistence(timeout: 5))
-        XCTAssertFalse(app.staticTexts["modularAnswer"].exists)
-    }
-
-    @MainActor
-    func testModularFractionAndNonexistentInverse() throws {
-        let app = XCUIApplication()
-        app.launch()
-        scrollTo(app, identifier: "task_modular_division")
-        app.buttons["task_modular_division"].tap()
-        scrollTo(app, identifier: "jumpToModularAnswer")
-        capture("Выбор метода деления по модулю")
-        app.buttons["jumpToModularAnswer"].tap()
-        XCTAssertTrue(app.staticTexts["modularAnswer"].waitForExistence(timeout: 10))
-        XCTAssertEqual(app.staticTexts["modularAnswer"].label, "72")
-        XCTAssertTrue(app.staticTexts["modularAnswer"].isHittable)
-        capture("Ответ дроби")
-        app.buttons["closeModularAnswer"].tap()
-        app.navigationBars.buttons.element(boundBy: 0).tap()
-        scrollTo(app, identifier: "task_inverse")
-        app.buttons["task_inverse"].tap()
-        replace(app, field: "a", with: "6")
-        replace(app, field: "m", with: "15")
-        scrollTo(app, identifier: "solve")
-        app.buttons["solve"].tap()
-        scrollTo(app, identifier: "jumpToModularAnswer")
-        app.buttons["jumpToModularAnswer"].tap()
-        XCTAssertEqual(app.staticTexts["modularAnswer"].label, "Обратного элемента нет")
-        capture("Обратного элемента нет")
-    }
-
-    @MainActor
-    func testPolynomialExampleTableAndValidation() throws {
-        let app = XCUIApplication()
-        app.launch()
-        scrollTo(app, identifier: "task_polynomial")
-        capture("Пять задач")
-        app.buttons["task_polynomial"].tap()
-        XCTAssertTrue(app.buttons["algorithmInfo"].waitForExistence(timeout: 5))
-        capture("Ввод многочленов")
-        app.buttons["algorithmInfo"].tap()
-        XCTAssertTrue(app.staticTexts["1. Записываем коэффициенты"].waitForExistence(timeout: 5))
-        app.buttons["closeAlgorithm"].tap()
-        scrollTo(app, identifier: "polynomialShowAnswer")
-        app.buttons["polynomialShowAnswer"].tap()
-        XCTAssertEqual(app.descendants(matching: .any)["polynomialAnswer"].firstMatch.label, "3α³ + α²")
-        capture("Ответ многочленов")
-        app.buttons["closePolynomialAnswer"].tap()
-        scrollTo(app, identifier: "polynomialShiftFactor")
-        XCTAssertTrue(app.descendants(matching: .any)["polynomialTable"].firstMatch.exists)
-        capture("Таблица многочленов")
-        let table = app.descendants(matching: .any)["polynomialTable"].firstMatch
-        table.swipeLeft()
-        table.swipeLeft()
-        XCTAssertTrue(app.staticTexts["polynomialColumnResult_2"].isHittable)
-        XCTAssertEqual(app.staticTexts["polynomialColumnResult_2"].label, "(3, 1, 0, 0)")
-        capture("Последний столбец таблицы многочленов")
-        scrollBackTo(app, identifier: "input_p")
-        replace(app, field: "p", with: "0")
-        scrollTo(app, identifier: "solve")
-        app.buttons["solve"].tap()
-        XCTAssertTrue(app.staticTexts["inputError"].waitForExistence(timeout: 5))
-        XCTAssertFalse(app.buttons["polynomialShowAnswer"].exists)
-    }
-
-    @MainActor
-    func testDirectDivisionConditionsAndImmediateCapture() throws {
-        let app = XCUIApplication()
-        app.launch()
-        scrollTo(app, identifier: "task_modular_division")
-        app.buttons["task_modular_division"].tap()
-        scrollTo(app, identifier: "modularCondition_1")
-        XCTAssertEqual(app.descendants(matching: .any)["modularCondition_1"].firstMatch.label,
-                       "Условие для рабочей строки: меньше или равно 153")
-        XCTAssertEqual(app.descendants(matching: .any)["modularMatrix_1"].firstMatch.label,
-                       "Строка 1: 104, −1. Строка 2: 179, 1. Строка 3: 0, 0")
-        capture("Строка 104 подходит под условие 153")
-        scrollTo(app, identifier: "modularCondition_2")
-        XCTAssertEqual(app.descendants(matching: .any)["modularCondition_2"].firstMatch.label,
-                       "Условие для рабочей строки: меньше или равно 49")
-        XCTAssertEqual(app.descendants(matching: .any)["modularMatrix_2"].firstMatch.label,
-                       "Строка 1: 104, −1. Строка 2: 179, 1. Строка 3: 104, −1")
-        capture("Сразу добавляем 104 и обновляем условие")
-        scrollTo(app, identifier: "modularCondition_7")
-        XCTAssertEqual(app.descendants(matching: .any)["modularCondition_7"].firstMatch.label,
-                       "Условие для рабочей строки: меньше или равно 23")
-        capture("Добавляем 26 и обновляем условие")
-    }
-
-    @MainActor
-    func testPowerMatrixFormatting() throws {
-        let app = XCUIApplication()
-        app.launch()
-        scrollTo(app, identifier: "task_inverse")
-        app.buttons["task_inverse"].tap()
-        scrollTo(app, identifier: "modularMatrix_0")
-        let initial = app.descendants(matching: .any)["modularMatrix_0"].firstMatch
-        XCTAssertTrue(initial.label.contains("Строка 3"))
-        XCTAssertTrue(initial.label.contains("2⁹"))
-        capture("Исходная матрица со степенями")
-        scrollTo(app, identifier: "modularMatrix_1")
-        let first = app.descendants(matching: .any)["modularMatrix_1"].firstMatch
-        XCTAssertEqual(first.label, "Строка 1: 2⁹, 2⁹, −112")
-        scrollTo(app, identifier: "modularMatrix_2")
-        let second = app.descendants(matching: .any)["modularMatrix_2"].firstMatch
-        XCTAssertEqual(second.label, "Строка 1: 2⁸, 2⁸, −56")
-        XCTAssertTrue(app.descendants(matching: .any)["modularOperation_2"].firstMatch.label.contains("M₁(½)"))
-        capture("Первая строка и индексы преобразований")
-        app.navigationBars.buttons.element(boundBy: 0).tap()
-        scrollTo(app, identifier: "task_modular_division")
-        app.buttons["task_modular_division"].tap()
-        scrollTo(app, identifier: "modularMatrix_1")
-        let fraction = app.descendants(matching: .any)["modularMatrix_1"].firstMatch
-        XCTAssertTrue(fraction.label.contains("Строка 3"))
-        capture("Полная матрица дроби и индексы")
-    }
-
-    @MainActor
-    func testNotebookArithmeticStyles() throws {
-        let app = XCUIApplication()
-        app.launch()
-        app.buttons["task_doubling"].tap()
-        setSolutionStyle(app, "Как в конспекте")
-        assertNotebookAnswer(app, "117")
-        XCTAssertFalse(app.staticTexts["Выбор множителя"].exists)
-        XCTAssertFalse(app.staticTexts["Начальное значение"].exists)
-        capture("Конспект — удвоение и сложение")
-        setSolutionStyle(app, "Подробно")
-        scrollTo(app, identifier: "answer")
-        XCTAssertEqual(app.staticTexts["answer"].label, "117")
-        app.navigationBars.buttons.element(boundBy: 0).tap()
-        app.buttons["task_division"].tap()
-        setSolutionStyle(app, "Как в конспекте")
-        assertNotebookAnswer(app, "1530 = 41 · 37 + 13")
-        capture("Конспект — двоичное деление")
-        setSolutionStyle(app, "Подробно")
-        scrollTo(app, identifier: "divisionQuotient")
-        XCTAssertEqual(app.staticTexts["divisionQuotient"].label, "q = 37")
-    }
-
-    @MainActor
-    func testNotebookModularStylesAndPersistence() throws {
-        let app = XCUIApplication()
-        app.launch()
-        scrollTo(app, identifier: "task_inverse")
-        app.buttons["task_inverse"].tap()
-        setSolutionStyle(app, "Как в конспекте")
-        scrollTo(app, identifier: "notebookMatrix_1")
-        capture("Конспект — матрица степени двойки")
-        assertNotebookAnswer(app, "145")
-        XCTAssertFalse(app.staticTexts["Проверяем существование"].exists)
-        app.navigationBars.buttons.element(boundBy: 0).tap()
-        scrollTo(app, identifier: "task_inverse")
-        app.buttons["task_inverse"].tap()
-        scrollTo(app, identifier: "solutionStyle")
-        XCTAssertTrue(app.descendants(matching: .any)["notebookSolution"].firstMatch.waitForExistence(timeout: 10))
-        scrollBackTo(app, identifier: "modularMethod")
-        app.buttons["modularMethod"].tap()
-        app.buttons["По степеням двойки"].tap()
-        app.buttons["solve"].tap()
-        scrollTo(app, identifier: "notebookLift_0")
-        capture("Конспект — подъём обратного")
-        assertNotebookAnswer(app, "145")
-        scrollBackTo(app, identifier: "modularMethod")
-        app.buttons["modularMethod"].tap()
-        app.buttons["Расширенный бинарный Евклид"].tap()
-        app.buttons["solve"].tap()
-        assertNotebookAnswer(app, "145")
-        setSolutionStyle(app, "Подробно")
-        scrollTo(app, identifier: "jumpToModularAnswer")
-        app.buttons["jumpToModularAnswer"].tap()
-        XCTAssertEqual(app.staticTexts["modularAnswer"].label, "145")
-        app.buttons["closeModularAnswer"].tap()
-        app.navigationBars.buttons.element(boundBy: 0).tap()
-        scrollTo(app, identifier: "task_modular_division")
-        app.buttons["task_modular_division"].tap()
-        setSolutionStyle(app, "Как в конспекте")
-        scrollTo(app, identifier: "notebookMatrix_2")
-        capture("Конспект — третья строка и условия")
-        assertNotebookAnswer(app, "72")
-        setSolutionStyle(app, "Подробно")
-    }
-
-    @MainActor
-    func testNotebookPolynomialStyle() throws {
-        let app = XCUIApplication()
-        app.launch()
-        scrollTo(app, identifier: "task_polynomial")
-        app.buttons["task_polynomial"].tap()
-        setSolutionStyle(app, "Как в конспекте")
-        scrollTo(app, identifier: "notebookPolynomialTable")
-        capture("Конспект — таблица многочленов")
-        assertNotebookAnswer(app, "3α³ + α²")
-        capture("Конспект — многочлены и ответ")
-        XCTAssertFalse(app.staticTexts["Верхняя строка таблицы"].exists)
-        XCTAssertFalse(app.staticTexts["Коэффициенты по mod 5"].exists)
-        setSolutionStyle(app, "Подробно")
-        scrollTo(app, identifier: "polynomialShowAnswer")
-        app.buttons["polynomialShowAnswer"].tap()
-        XCTAssertEqual(app.descendants(matching: .any)["polynomialAnswer"].firstMatch.label, "3α³ + α²")
-    }
-
-    @MainActor
-    private func setSolutionStyle(_ app: XCUIApplication, _ title: String) {
-        let control = app.segmentedControls["solutionStyle"]
-        let button = control.buttons[title]
-        for _ in 0..<25 {
-            if button.exists {
-                let frame = button.frame
-                let visibleTop = app.navigationBars.firstMatch.frame.maxY
-                if button.isHittable && frame.minY > visibleTop && frame.maxY < app.frame.maxY {
-                    break
-                }
-                if frame.minY <= visibleTop { app.swipeDown() }
-                else { app.swipeUp() }
-            } else if app.descendants(matching: .any)["notebookSolution"].firstMatch.exists {
-                app.swipeDown()
-            } else { app.swipeUp() }
-        }
-        XCTAssertTrue(button.isHittable)
-        button.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
-        let paper = app.descendants(matching: .any)["notebookSolution"].firstMatch
-        if title == "Как в конспекте" { XCTAssertTrue(paper.waitForExistence(timeout: 5)) }
-        else {
-            expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: paper)
-            waitForExpectations(timeout: 5)
-        }
-    }
-
-    @MainActor
-    private func assertNotebookAnswer(_ app: XCUIApplication, _ expected: String) {
-        scrollTo(app, identifier: "notebookAnswer")
-        XCTAssertEqual(app.descendants(matching: .any)["notebookAnswer"].firstMatch.label, expected)
-        XCTAssertTrue(app.descendants(matching: .any)["notebookSolution"].firstMatch.exists)
-        XCTAssertFalse(app.staticTexts["Ход решения"].exists)
-    }
-
-    @MainActor
-    private func scrollBackTo(_ app: XCUIApplication, identifier: String) {
-        let target = app.descendants(matching: .any)[identifier].firstMatch
-        for _ in 0..<25 {
-            if target.isHittable { break }
-            app.swipeDown()
-        }
-        XCTAssertTrue(target.isHittable)
-    }
-
-    @MainActor
-    private func scrollTo(_ app: XCUIApplication, identifier: String) {
-        let target = app.descendants(matching: .any)[identifier].firstMatch
-        for _ in 0..<25 {
-            if target.isHittable { break }
-            app.swipeUp()
-        }
-        XCTAssertTrue(target.waitForExistence(timeout: 5))
-    }
-
-    @MainActor
-    private func replace(_ app: XCUIApplication, field: String, with text: String) {
-        let element = app.descendants(matching: .any)["input_\(field)"].firstMatch
-        XCTAssertTrue(element.waitForExistence(timeout: 5))
-        element.tap()
-        element.coordinate(withNormalizedOffset: CGVector(dx: 0.98, dy: 0.5)).tap()
-        let oldValue = element.value as? String ?? ""
-        element.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: oldValue.count) + text)
-        XCTAssertEqual(element.value as? String, text, "The input must be replaced before checking the calculation")
-        let done = app.buttons["Готово"]
-        if done.exists { done.tap() }
-    }
-
-    @MainActor
-    private func scrollToAnswer(_ app: XCUIApplication) {
-        for _ in 0..<10 {
-            if app.staticTexts["answer"].isHittable { break }
-            app.swipeUp()
-        }
-        XCTAssertTrue(app.staticTexts["answer"].waitForExistence(timeout: 5))
-    }
 }

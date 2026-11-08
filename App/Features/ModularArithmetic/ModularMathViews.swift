@@ -114,15 +114,11 @@ struct TransformationLabel: View {
     var body: some View {
         Group {
             if operation.first == "M", let opening = operation.firstIndex(of: "(") {
-                ScrollView(.horizontal) {
-                    HStack(alignment: .top, spacing: 1) {
-                        Text("M").font(.system(.title3, design: .serif).weight(.semibold))
-                        Text(indices(before: opening)).font(.system(.caption, design: .serif))
-                            .padding(.top, indexDrop)
-                        Text(String(operation[opening...])).font(.system(.title3, design: .serif))
-                    }
-                    .fixedSize().padding(.vertical, verticalInset)
-                }.scrollIndicators(.visible)
+                #if os(watchOS)
+                operationText(opening: opening)
+                #else
+                ScrollView(.horizontal) { operationText(opening: opening) }.scrollIndicators(.visible)
+                #endif
             } else {
                 MathText(text: operation).fixedSize(horizontal: false, vertical: true)
                     .padding(.vertical, verticalInset)
@@ -130,6 +126,14 @@ struct TransformationLabel: View {
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(operation)
+    }
+
+    private func operationText(opening: String.Index) -> some View {
+        HStack(alignment: .top, spacing: 1) {
+            Text("M").font(.system(.title3, design: .serif).weight(.semibold))
+            Text(indices(before: opening)).font(.system(.caption, design: .serif)).padding(.top, indexDrop)
+            Text(String(operation[opening...])).font(.system(.title3, design: .serif))
+        }.fixedSize().padding(.vertical, verticalInset)
     }
 
     private func indices(before opening: String.Index) -> String {

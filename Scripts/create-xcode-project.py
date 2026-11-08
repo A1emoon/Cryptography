@@ -39,6 +39,7 @@ sources = sorted(root.glob('App/**/*.swift')) + sorted(root.glob('Sources/Number
 tests = sorted(root.glob('UITests/**/*.swift'))
 reference_files = sorted(root.glob('Tests/NumberTheoryCoreTests/**/*.*'))
 reference_files += sorted(root.glob('Scripts/*.*')) + sorted(root.glob('Documentation/*.md'))
+reference_files += [root/'Sources/NumberTheoryCore/Reference/course-library.json']
 reference_files += [root/'README.md', root/'Package.swift', root/'App/Resources/AppIconSource.svg']
 file_types = {'.swift': 'sourcecode.swift', '.py': 'text.script.python', '.cjs': 'sourcecode.javascript',
               '.md': 'net.daringfireball.markdown', '.json': 'text.json', '.svg': 'image.svg'}
@@ -57,6 +58,10 @@ asset_path = 'App/Resources/Assets.xcassets'
 obj('assets', f'isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = {pbx_value(asset_path)}; sourceTree = SOURCE_ROOT;')
 references[asset_path] = ref('assets')
 obj('assets-build', f'isa = PBXBuildFile; fileRef = {ref("assets")};')
+course_path = 'Конспекты и примеры'
+obj('course-folder', f'isa = PBXFileReference; lastKnownFileType = folder; path = {pbx_value(course_path)}; sourceTree = SOURCE_ROOT;')
+obj('course-build', f'isa = PBXBuildFile; fileRef = {ref("course-folder")};')
+obj('library-build', f'isa = PBXBuildFile; fileRef = {ref("Sources/NumberTheoryCore/Reference/course-library.json")};')
 for directory in ['Documentation/Screenshots', 'Documentation/References']:
     if (root/directory).exists():
         obj(directory, f'isa = PBXFileReference; lastKnownFileType = folder; path = {pbx_value(directory)}; sourceTree = SOURCE_ROOT;')
@@ -77,13 +82,13 @@ def group(directory):
     return ref(key)
 
 children = [group(directory) for directory in ['App', 'Sources', 'Tests', 'UITests', 'Documentation', 'Scripts']]
-children += [references['README.md'], references['Package.swift'], ref('products')]
+children += [references['README.md'], references['Package.swift'], ref('course-folder'), ref('products')]
 obj('root-group', f'isa = PBXGroup; children = ({", ".join(children)}); sourceTree = "<group>";')
 for name, files in [('app', sources), ('tests', tests)]:
     builds = [ref('build:' + f.relative_to(root).as_posix()) for f in files]
     obj(name+'-sources', f'isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = ({", ".join(builds)}); runOnlyForDeploymentPostprocessing = 0;')
     obj(name+'-frameworks', 'isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0;')
-    resources = ref('assets-build') if name == 'app' else ''
+    resources = ', '.join(ref(x) for x in ['assets-build','course-build','library-build']) if name == 'app' else ''
     obj(name+'-resources', f'isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = ({resources}); runOnlyForDeploymentPostprocessing = 0;')
 
 obj('proxy', f'isa = PBXContainerItemProxy; containerPortal = {ref("project")}; proxyType = 1; remoteGlobalIDString = {ref("app-target")}; remoteInfo = NumberTheory;')
@@ -146,4 +151,6 @@ if not (scheme_dir/'NumberTheory.xcscheme').exists():
   <ProfileAction buildConfiguration="Release" shouldUseLaunchSchemeArgsEnv="YES" savedToolIdentifier="" useCustomWorkingDirectory="NO" debugDocumentVersioning="YES"><BuildableProductRunnable runnableDebuggingMode="0">{app}</BuildableProductRunnable></ProfileAction>
   <AnalyzeAction buildConfiguration="Debug"/><ArchiveAction buildConfiguration="Release" revealArchiveInOrganizer="YES"/>
 </Scheme>''')
+from configure_watch_project import configure_watch
+configure_watch(root, previous_configurations)
 print(project_dir)

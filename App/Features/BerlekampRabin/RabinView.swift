@@ -43,7 +43,7 @@ struct RabinView: View {
                         }.buttonStyle(.plain).foregroundStyle(AppStyle.accent)
                             .accessibilityLabel("Как читать ответ").accessibilityIdentifier("rabinAnswerReason")
                     }
-                }.padding(22).frame(maxWidth: .infinity, alignment: .leading)
+                }.padding(AppStyle.contentPadding).frame(maxWidth: .infinity, alignment: .leading)
                     .accessibilityElement(children: .contain).accessibilityIdentifier("studentSolution")
                     .id(model.calculationID)
             } else if model.isCalculating {
@@ -52,35 +52,29 @@ struct RabinView: View {
                 VStack(alignment: .leading, spacing: 18) {
                     Label(error, systemImage: "exclamationmark.circle").foregroundStyle(.red).accessibilityIdentifier("inputError")
                     Button("Изменить условие") { showInput = true }
-                }.padding(22)
+                }.padding(AppStyle.contentPadding)
             } else {
                 Button("Задать условие") { showInput = true }.padding(30)
             }
-        }.background(AppStyle.paper)
+        }.courseSolutionAppearance()
             .navigationTitle("").navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItemGroup(placement: .topBarTrailing) {
-                    Button { showInput = true } label: { Image(systemName: "square.and.pencil") }
-                        .accessibilityLabel("Изменить условие").accessibilityIdentifier("rabinInput")
-                    Button { showHelp = true } label: { Image(systemName: "book.closed") }
-                        .accessibilityLabel("Об алгоритме и обозначениях").accessibilityIdentifier("rabinHelp")
-                }
-            }
+            .toolbar { CoursePageTools(firstTitle: "Изменить условие", firstIcon: "square.and.pencil", firstID: "rabinInput", firstAction: { showInput = true }, secondTitle: "Об алгоритме", secondIcon: "book.closed", secondID: "rabinHelp", secondAction: { showHelp = true }) }
             .sheet(isPresented: $showInput) { RabinInputView(model: model) }
             .sheet(isPresented: $showHelp) { RabinHelpView() }
             .sheet(isPresented: $showAnswerReason) {
                 RabinExplanationView(explanation: RabinExplanation(title: "Как читать ответ", text: "[r]q обозначает класс всех целых чисел r + kq, где k — любое целое. Каждый различный корень записан один раз. ∅ означает отсутствие решений; ℤq — подходят все остатки по q.", terms: [.root, .multiplicity, .finiteField]))
             }
             .task { if !didLoad { didLoad = true; model.solve() } }
-            .onDisappear { model.cancel() }
+            .onDisappear { if model.isCalculating { model.cancel() } }
     }
 }
+#if !os(watchOS)
 private struct RabinInputView: View {
     @ObservedObject var model: RabinModel
     @State private var f = ""
     @State private var q = ""
     @Environment(\.dismiss) private var dismiss
-    @FocusState private var focused: Bool
+    @FocusState private var focused: String?
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -89,15 +83,15 @@ private struct RabinInputView: View {
                     RabinExplainedText(text: "Введите коэффициенты многочлена от старшей степени к свободному члену. Внутренние нули не пропускайте: 1, 0, 2 означает x² + 2.")
                     VStack(alignment: .leading, spacing: 10) {
                         Text("Коэффициенты f").font(.caption).foregroundStyle(.secondary)
-                        TextField("1, 3, 2, 1", text: $f, axis: .vertical).lineLimit(1...5).monospacedDigit()
-                            .focused($focused).accessibilityIdentifier("input_f")
+                        HStack{TextField("1, 3, 2, 1", text: $f, axis: .vertical).lineLimit(1...5).monospacedDigit()
+                            .focused($focused,equals:"f").accessibilityIdentifier("input_f");Button{f="";focused="f"}label:{Image(systemName:"xmark.circle.fill").foregroundStyle(.tertiary).frame(width:28,height:28)}.buttonStyle(.plain).accessibilityLabel("Очистить f").accessibilityIdentifier("clear_f")}
                         if let coefficients = try? PolynomialSolver.parse(f, name: "f") {
                             MathLine(RabinFormat.signed(coefficients)).foregroundStyle(AppStyle.accent)
                         }
                     }.padding(16).background(AppStyle.paper, in: RoundedRectangle(cornerRadius: 14))
                     VStack(alignment: .leading, spacing: 10) {
                         Text("Простой модуль q").font(.caption).foregroundStyle(.secondary)
-                        TextField("7", text: $q).monospacedDigit().focused($focused).accessibilityIdentifier("input_q")
+                        HStack{TextField("7", text: $q).monospacedDigit().focused($focused,equals:"q").accessibilityIdentifier("input_q");Button{q="";focused="q"}label:{Image(systemName:"xmark.circle.fill").foregroundStyle(.tertiary).frame(width:28,height:28)}.buttonStyle(.plain).accessibilityLabel("Очистить q").accessibilityIdentifier("clear_q")}
                     }.padding(16).background(AppStyle.paper, in: RoundedRectangle(cornerRadius: 14))
                     Text("Точная проверка простоты: q ≤ 2⁶⁴ − 1. Коэффициенты — целые числа любой длины. Для q = 2 проверяются оба остатка.").font(.footnote).foregroundStyle(.secondary)
                     Menu("Примеры") {
@@ -107,22 +101,23 @@ private struct RabinInputView: View {
                         Button("Нет корней") { f = "1,0,1"; q = "7" }
                         Button("Нулевой многочлен") { f = "0"; q = "7" }
                     }
-                    Button { focused = false; model.solve(coefficients: f, q: q); dismiss() } label: {
+                    Button { focused = nil; model.solve(coefficients: f, q: q); dismiss() } label: {
                         Text("Решить").font(.headline).frame(maxWidth: .infinity).padding(.vertical, 8)
                     }.buttonStyle(.borderedProminent).controlSize(.large).accessibilityIdentifier("rabinSolve")
-                }.padding(22)
+                }.padding(AppStyle.contentPadding)
             }.background(AppStyle.background)
                 .navigationTitle("Условие").navigationBarTitleDisplayMode(.inline)
                 .toolbar { ToolbarItem(placement: .cancellationAction) {
                     Button("Отмена") { dismiss() }.accessibilityIdentifier("closeRabinInput")
                 }; ToolbarItemGroup(placement: .keyboard) {
-                    Spacer(); Button("Готово") { focused = false }
+                    Spacer(); Button("Готово") { focused = nil }
                 } }
         }.keyboardType(.numbersAndPunctuation).textInputAutocapitalization(.never).autocorrectionDisabled()
             .presentationDetents([.large])
             .onAppear { f = model.coefficients; q = model.q }
     }
 }
+#endif
 private struct RabinHelpView: View {
     var body: some View {
         StudentDetailSheet(title: "Алгоритм Берлекэмпа–Рабина", large: true) {

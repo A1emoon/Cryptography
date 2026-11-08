@@ -40,7 +40,7 @@ struct CipollaView: View {
                         }.buttonStyle(.plain).foregroundStyle(AppStyle.accent)
                             .accessibilityLabel("Как получены корни").accessibilityIdentifier("cipollaAnswerReason")
                     }
-                }.padding(22).frame(maxWidth: .infinity, alignment: .leading)
+                }.padding(AppStyle.contentPadding).frame(maxWidth: .infinity, alignment: .leading)
                     .accessibilityElement(children: .contain).accessibilityIdentifier("studentSolution")
                     .id(model.calculationID)
             } else if model.isCalculating {
@@ -49,34 +49,28 @@ struct CipollaView: View {
                 VStack(alignment: .leading, spacing: 18) {
                     Label(error, systemImage: "exclamationmark.circle").foregroundStyle(.red).accessibilityIdentifier("inputError")
                     Button("Изменить условие") { showInput = true }
-                }.padding(22)
+                }.padding(AppStyle.contentPadding)
             } else { Button("Задать условие") { showInput = true }.padding(30) }
-        }.background(AppStyle.paper)
+        }.courseSolutionAppearance()
             .navigationTitle("").navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItemGroup(placement: .topBarTrailing) {
-                    Button { showInput = true } label: { Image(systemName: "square.and.pencil") }
-                        .accessibilityLabel("Изменить условие").accessibilityIdentifier("cipollaInput")
-                    Button { showHelp = true } label: { Image(systemName: "book.closed") }
-                        .accessibilityLabel("Об алгоритме и обозначениях").accessibilityIdentifier("cipollaHelp")
-                }
-            }
+            .toolbar { CoursePageTools(firstTitle: "Изменить условие", firstIcon: "square.and.pencil", firstID: "cipollaInput", firstAction: { showInput = true }, secondTitle: "Об алгоритме", secondIcon: "book.closed", secondID: "cipollaHelp", secondAction: { showHelp = true }) }
             .sheet(isPresented: $showInput) { CipollaInputView(model: model) }
             .sheet(isPresented: $showHelp) { CipollaInfoView() }
             .sheet(isPresented: $showAnswerReason) {
                 if let s = model.solution { CipollaExplanationView(explanation: CipollaPresentation.rootsReason(s)) }
             }
             .task { if !didLoad { didLoad = true; model.solve() } }
-            .onDisappear { model.cancel() }
+            .onDisappear { if model.isCalculating { model.cancel() } }
     }
 }
+#if !os(watchOS)
 private struct CipollaInputView: View {
     @ObservedObject var model: CipollaModel
     @State private var a = ""
     @State private var p = ""
     @State private var delta = ""
     @Environment(\.dismiss) private var dismiss
-    @FocusState private var focused: Bool
+    @FocusState private var focused: String?
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -94,15 +88,15 @@ private struct CipollaInputView: View {
                         Button("Нулевой корень") { a = "0"; p = "109"; delta = "" }
                     }
                     Button {
-                        focused = false; model.a = a; model.p = p; model.delta = delta; model.solve(); dismiss()
+                        focused = nil; model.a = a; model.p = p; model.delta = delta; model.solve(); dismiss()
                     } label: { Text("Решить").font(.headline).frame(maxWidth: .infinity).padding(.vertical, 8) }
                         .buttonStyle(.borderedProminent).controlSize(.large).accessibilityIdentifier("cipollaSolve")
-                }.padding(22)
+                }.padding(AppStyle.contentPadding)
             }.background(AppStyle.background)
                 .navigationTitle("Условие").navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) { Button("Отмена") { dismiss() }.accessibilityIdentifier("closeCipollaInput") }
-                    ToolbarItemGroup(placement: .keyboard) { Spacer(); Button("Готово") { focused = false } }
+                    ToolbarItemGroup(placement: .keyboard) { Spacer(); Button("Готово") { focused = nil } }
                 }
         }.keyboardType(.numbersAndPunctuation).textInputAutocapitalization(.never).autocorrectionDisabled()
             .presentationDetents([.large]).onAppear { a = model.a; p = model.p; delta = model.delta }
@@ -110,8 +104,10 @@ private struct CipollaInputView: View {
     private func field(_ title: String, id: String, text: Binding<String>, placeholder: String = "") -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(title).font(.caption).foregroundStyle(.secondary)
-            TextField(placeholder, text: text, axis: .vertical).lineLimit(1...4).monospacedDigit()
-                .focused($focused).accessibilityIdentifier("input_" + id)
+            HStack{TextField(placeholder, text: text, axis: .vertical).lineLimit(1...4).monospacedDigit()
+                .focused($focused,equals:id).accessibilityIdentifier("input_" + id);Button{text.wrappedValue="";focused=id}label:{Image(systemName:"xmark.circle.fill").foregroundStyle(.tertiary).frame(width:28,height:28)}.buttonStyle(.plain).accessibilityLabel("Очистить "+title).accessibilityIdentifier("clear_"+id)}
         }.padding(16).background(AppStyle.paper, in: RoundedRectangle(cornerRadius: 14))
     }
 }
+
+#endif

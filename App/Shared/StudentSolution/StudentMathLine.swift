@@ -2,6 +2,8 @@ import SwiftUI
 
 enum StudentMathAtom {
     case text(String)
+    case rich(String)
+    case floorFraction(String,String)
     case fraction(String, String)
     case symbol(String, String)
     case power(String, String)
@@ -9,6 +11,8 @@ enum StudentMathAtom {
     var spoken: String {
         switch self {
         case .text(let text): text
+        case .rich(let text): text
+        case .floorFraction(let a,let b): "Целая часть \(a), делённое на \(b)"
         case .symbol(let a, let b): "Символ \(a) по \(b)"
         case .fraction(let a, let b): "\(a), делённое на \(b)"
         case .power(let base, let exponent): "\(base) в степени \(exponent)"
@@ -36,6 +40,8 @@ private struct StudentMathToken: View {
     @ViewBuilder private var mathematicalText: some View {
         switch atom {
         case .text(let text): MathText(text: text)
+        case .rich(let text): ReferenceMathText(text:text)
+        case .floorFraction(let a,let b): FloorFractionView(numerator:a,denominator:b)
         case .symbol(let a, let b):
             StudentFraction(numerator: a, denominator: b).padding(.horizontal, 10)
                 .overlay(alignment: .leading) { MatrixBracket(right: false).stroke(lineWidth: 1.2).frame(width: 7) }
@@ -62,10 +68,25 @@ private struct StudentMathToken: View {
         }.fixedSize().padding(.vertical, 6)
     }
     var body: some View {
+        #if os(watchOS)
+        token.fixedSize()
+        #else
         ViewThatFits(in: .horizontal) {
             token.fixedSize()
-            ScrollView(.horizontal) { token.fixedSize() }.frame(height: 62)
+            ScrollView(.horizontal) { token.fixedSize() }.frame(height: overflowHeight)
         }
+        #endif
+    }
+    private var overflowHeight: CGFloat {
+        #if os(watchOS)
+        switch atom {
+        case .text: 44
+        case .rich, .power: 56
+        default: 80
+        }
+        #else
+        88
+        #endif
     }
     @ViewBuilder private var token: some View {
         if isLink {
@@ -110,11 +131,19 @@ private struct StudentMathFlow: Layout {
 struct StudentFormulaView: View {
     let atoms: [StudentMathAtom]
     var body: some View {
+        #if os(watchOS)
+        HStack(spacing: 6) {
+            ForEach(atoms.indices, id: \.self) { index in
+                StudentMathToken(atom: atoms[index], isLink: false, action: {})
+            }
+        }.courseMathRow()
+        #else
         StudentMathFlow {
             ForEach(atoms.indices, id: \.self) { index in
                 StudentMathToken(atom: atoms[index], isLink: false, action: {})
             }
         }.frame(maxWidth: .infinity, alignment: .leading)
+        #endif
     }
 }
 struct StudentMathLine: View {
@@ -134,6 +163,14 @@ struct StudentMathLine: View {
     }
     var body: some View {
         HStack(alignment: .top, spacing: 7) {
+            #if os(watchOS)
+            HStack(spacing: 6) {
+                ForEach(atoms.indices, id: \.self) { index in
+                    StudentMathToken(atom: atoms[index], isLink: workIndices.contains(index), action: { onWork(index) })
+                        .accessibilityIdentifier(workIndices.contains(index) ? "\(identifier)_work_\(index)" : "\(identifier)_part_\(index)")
+                }
+            }.courseMathRow().accessibilityIdentifier(identifier + "_scroll")
+            #else
             StudentMathFlow {
                 ForEach(groups.indices, id: \.self) { group in
                     HStack(spacing: 6) {
@@ -144,6 +181,7 @@ struct StudentMathLine: View {
                     }
                 }
             }.frame(maxWidth: .infinity, alignment: .leading)
+            #endif
             Button(action: onReason) {
                 Image(systemName: "questionmark.circle").font(.system(size: 15))
                     .foregroundStyle(AppStyle.accent.opacity(0.8)).frame(width: 32, height: 38)
@@ -162,14 +200,19 @@ struct StudentDetailSheet<Content: View>: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
-                    Text(title).font(.title2.weight(.semibold)).accessibilityAddTraits(.isHeader)
+                    Text(title).font(AppStyle.isWatch ? .headline : .title2.weight(.semibold)).accessibilityAddTraits(.isHeader)
                     content()
-                }.frame(maxWidth: .infinity, alignment: .leading).padding(22)
-            }.background(AppStyle.background)
-                .navigationTitle("К записи решения").navigationBarTitleDisplayMode(.inline)
+                }.frame(maxWidth: .infinity, alignment: .leading).padding(AppStyle.contentPadding)
+            }.background(AppStyle.isWatch ? Color.white : AppStyle.background)
+                .navigationTitle(AppStyle.isWatch ? "" : "К записи решения").navigationBarTitleDisplayMode(.inline)
                 .toolbar { ToolbarItem(placement: .confirmationAction) {
-                    Button("Готово") { dismiss() }.accessibilityIdentifier("closeStudentDetail")
+                    Button("Готово") { dismiss() }.accessibilityIdentifier("closeStudentDetail").courseToolbarControl()
                 } }
-        }.presentationDetents(large ? [.large] : [.medium, .large]).presentationDragIndicator(.visible)
+        }
+        #if os(watchOS)
+        .background(Color.white).foregroundStyle(Color.black).environment(\.colorScheme, .light)
+        #endif
+        .accessibilityIdentifier("studentDetailSheet")
+        .presentationDetents(large ? [.large] : [.medium, .large]).presentationDragIndicator(.visible)
     }
 }

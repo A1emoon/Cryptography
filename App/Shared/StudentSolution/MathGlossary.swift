@@ -97,37 +97,21 @@ enum MathTerm: String, CaseIterable, Identifiable {
         }
     }
 }
-struct MathExplainedText: View {
-    let text: String
-    var excluded: MathTerm? = nil
-    @State private var selected: MathTerm?
-    private var attributed: AttributedString {
-        var result = AttributedString(text)
-        for term in MathTerm.allCases where term != excluded {
-            guard let regex = try? NSRegularExpression(pattern: "\\b(?:" + term.pattern + ")\\b", options: [.caseInsensitive]) else { continue }
-            for match in regex.matches(in: text, range: NSRange(text.startIndex..., in: text)) {
-                guard let range = Range(match.range, in: text), let lower = AttributedString.Index(range.lowerBound, within: result),
-                      let upper = AttributedString.Index(range.upperBound, within: result),
-                      result[lower..<upper].runs.allSatisfy({ $0.link == nil }) else { continue }
-                result[lower..<upper].link = URL(string: "math-term://definition/" + term.rawValue)
-            }
-        }
-        return result
-    }
-    var body: some View {
-        Text(attributed).font(.callout).tint(AppStyle.accent)
-            .environment(\.openURL, OpenURLAction { url in
-                guard url.scheme == "math-term", let term = MathTerm(rawValue: url.lastPathComponent) else { return .systemAction }
-                selected = term; return .handled
-            }).sheet(item: $selected) { MathDefinitionView(term: $0) }
-    }
+struct MathExplainedText:View {
+    let text:String
+    var excluded:MathTerm?=nil
+    var body:some View{ReferenceText(text:text,excluding:excluded?.referenceID)}
 }
-struct MathDefinitionView: View {
-    let term: MathTerm
-    var body: some View {
-        StudentDetailSheet(title: term.title) {
-            MathExplainedText(text: term.definition, excluded: term)
-            ForEach(term.formulas.indices, id: \.self) { StudentFormulaView(atoms: term.formulas[$0]) }
+struct MathDefinitionView:View {
+    let term:MathTerm
+    var body:some View {
+        if let id=term.referenceID, let entry=CourseLibrary.shared[id] {
+            ReferenceEntrySheet(entry:entry)
+        } else {
+            StudentDetailSheet(title:term.title,large:true){
+                if let id=term.referenceID,let entry=CourseLibrary.shared[id]{ReferenceArticleContent(entry:entry,showTitle:false)}
+                else{MathExplainedText(text:term.definition,excluded:term);ForEach(term.formulas.indices,id:\.self){StudentFormulaView(atoms:term.formulas[$0])}}
+            }
         }
     }
 }

@@ -4,6 +4,7 @@ enum SolutionStyle: String, CaseIterable {
     case detailed, notebook
     var title: String { self == .detailed ? "Подробно" : "Как в конспекте" }
 }
+#if !os(watchOS)
 struct SolutionStylePicker: View {
     @Binding var selection: SolutionStyle
     var body: some View {
@@ -15,6 +16,8 @@ struct SolutionStylePicker: View {
             .padding(.horizontal, 22).padding(.bottom, 18)
     }
 }
+
+#endif
 
 /// Mathematical fragments wrap as units; a single long fragment can be scrolled.
 struct NotebookFlow: Layout {
@@ -56,7 +59,7 @@ struct NotebookAnswer: View {
     let text: String
     var body: some View {
         MathText(text: "Ответ: " + text)
-            .fixedSize(horizontal: false, vertical: true).textSelection(.enabled)
+            .fixedSize(horizontal: false, vertical: true).courseTextSelection()
             .padding(.vertical, 8).frame(maxWidth: .infinity, alignment: .leading)
             .accessibilityElement(children: .ignore)
             .accessibilityIdentifier("notebookAnswer").accessibilityLabel(text)

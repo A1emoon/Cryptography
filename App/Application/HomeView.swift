@@ -10,39 +10,9 @@ struct HomeView: View {
                     Text("Теоретико-числовые методы\nв криптографии")
                         .font(.subheadline).foregroundStyle(.secondary)
                     Text("Выберите задачу").font(.title2.weight(.semibold)).padding(.top, 8)
-                    NavigationLink {
-                        CalculatorView()
-                    } label: {
-                        TaskCard(title: "Удвоение–сложение", subtitle: "Произведение по модулю",
-                                 formula: "r = (a · b) mod m", example: "(78 · 96) mod 273 = 117", icon: "multiply")
+                    ForEach(CourseTask.allCases){task in
+                        NavigationLink{CourseTaskView(kind:task)}label:{TaskCard(title:task.title,subtitle:task.subtitle,formula:task.formula,example:task.example,icon:task.symbol)}.buttonStyle(.plain).accessibilityIdentifier("task_"+(task == .modularDivision ? "modular_division":task.id))
                     }
-                    .buttonStyle(.plain).accessibilityIdentifier("task_doubling")
-                    NavigationLink {
-                        DivisionView()
-                    } label: {
-                        TaskCard(title: "Двоичное деление уголком", subtitle: "Частное как сумма степеней двойки",
-                                 formula: "a = b · q + r", example: "1530 = 41 · 37 + 13", icon: "divide")
-                    }
-                    .buttonStyle(.plain).accessibilityIdentifier("task_division")
-                    NavigationLink {
-                        ModularView(isDivision: false)
-                    } label: {
-                        TaskCard(title: "Обратное по модулю", subtitle: "Бинарный Евклид и степени двойки",
-                                 formula: "a⁻¹ mod m = x", example: "113⁻¹ mod 512 = 145", icon: "arrow.triangle.2.circlepath")
-                    }.buttonStyle(.plain).accessibilityIdentifier("task_inverse")
-                    NavigationLink {
-                        ModularView(isDivision: true)
-                    } label: {
-                        TaskCard(title: "Деление по модулю", subtitle: "Через обратное или третью строку",
-                                 formula: "(u / v) mod m = x", example: "(153 / 179) mod 283 = 72", icon: "divide.circle")
-                    }.buttonStyle(.plain).accessibilityIdentifier("task_modular_division")
-                    NavigationLink {
-                        PolynomialView()
-                    } label: {
-                        TaskCard(title: "Многочлены: удвоение–сложение", subtitle: "Сдвиги и приведение коэффициентов",
-                                 formula: "R(α) = A(α) · B(α) mod (M(α), p)",
-                                 example: "mod (α⁴ + 2α + 2, 5) → 3α³ + α²", icon: "function")
-                    }.buttonStyle(.plain).accessibilityIdentifier("task_polynomial")
                     NavigationLink {
                         CipollaView()
                     } label: {
@@ -59,7 +29,7 @@ struct HomeView: View {
                 .padding(22)
             }
             .background(AppStyle.background)
-            .navigationTitle("Задания")
+            .navigationTitle("Задачи")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(AppStyle.background, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
@@ -86,10 +56,10 @@ private struct TaskCard: View {
                 Spacer(minLength: 0)
                 Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(.tertiary)
             }
-            Text(formula).font(.system(.title3, design: .serif)).foregroundStyle(AppStyle.accent)
+            MathText(text:formula).padding(.vertical,4).foregroundStyle(AppStyle.accent)
                 .fixedSize(horizontal: false, vertical: true)
             Divider()
-            Text(example).font(.system(.callout, design: .serif)).foregroundStyle(.secondary)
+            MathText(text:example).padding(.vertical,4).foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(20).frame(maxWidth: .infinity, alignment: .leading)

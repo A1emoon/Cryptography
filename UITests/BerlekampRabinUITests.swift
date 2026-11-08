@@ -19,13 +19,11 @@ final class BerlekampRabinUITests: XCTestCase {
         let a = XCTAttachment(screenshot: XCUIScreen.main.screenshot()); a.name = name; a.lifetime = .keepAlways; add(a)
     }
     @MainActor private func close(_ app: XCUIApplication) { app.buttons["closeStudentDetail"].firstMatch.tap() }
-    @MainActor private func replace(_ app: XCUIApplication, _ id: String, _ value: String) {
-        let field = find(app,id); scroll(app,id); field.tap()
-        field.coordinate(withNormalizedOffset: CGVector(dx: 0.98, dy: 0.5)).tap()
-        let old = field.value as? String ?? ""
-        field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: old.count) + value)
-        XCTAssertEqual(field.value as? String, value)
-        if app.buttons["Готово"].exists { app.buttons["Готово"].firstMatch.tap() }
+    @MainActor private func replace(_ app:XCUIApplication,_ id:String,_ value:String){
+        let clear="clear_"+id.replacingOccurrences(of:"input_",with:"")
+        scroll(app,clear);find(app,clear).tap()
+        if !value.isEmpty{find(app,id).typeText(value);XCTAssertEqual(find(app,id).value as? String,value)}
+        if app.buttons["Готово"].exists{app.buttons["Готово"].firstMatch.tap()}
     }
     @MainActor private func solve(_ app: XCUIApplication, _ f: String, _ q: String) {
         app.buttons["rabinInput"].tap()

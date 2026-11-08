@@ -13,11 +13,25 @@ struct NotebookPolynomialView: View {
             if !s.preparation.isEmpty {
                 MathLine("\(s.baseName) ≡ \(s.base.vector()) (mod M, \(s.p))")
             }
-            ScrollView(.horizontal) {
+            NotebookPolynomialTable(solution:s)
+            NotebookAnswer(text: s.result.formula.replacingOccurrences(of: "α", with: variable))
+        }
+    }
+    private func math(_ text: String) -> some View { MathText(text: text).fixedSize().padding(.vertical, 3) }
+}
+
+struct NotebookPolynomialTable:View {
+ @State private var scaling:PolynomialStep?
+ let solution:PolynomialSolution
+ private var s:PolynomialSolution{solution}
+ var body:some View {
+ScrollView(.horizontal) {
                 Grid(alignment: .topLeading, horizontalSpacing: 0, verticalSpacing: 0) {
                     GridRow {
                         Color.clear.frame(width: 85, height: 45)
-                        ForEach(s.columns) { column in math(column.addition.vector()).padding(12) }
+                        ForEach(s.columns) { column in
+                            Button{scaling=column.scaling}label:{HStack(spacing:4){math(column.addition.vector());Image(systemName:"arrow.up.right.square").font(.system(size:10)).foregroundStyle(AppStyle.accent)}}.buttonStyle(.plain).accessibilityLabel("Вычислить верхнюю ячейку: \(column.coefficient) · \(s.base.vector())").accessibilityIdentifier("polynomialScale_\(column.id)").padding(12)
+                        }
                     }
                     GridRow {
                         math("(1, 0)").padding(12)
@@ -29,6 +43,7 @@ struct NotebookPolynomialView: View {
                                     else if let operand = step.operand {
                                         math((step.action == .subtract ? "− " : "+ ") + operand.vector(width: step.width))
                                         Divider()
+                                        if step.needsCoefficientReduction {math(step.rawVector)}
                                         math(step.result.vector())
                                     }
                                 }
@@ -38,8 +53,8 @@ struct NotebookPolynomialView: View {
                     }.overlay(alignment: .top) { Rectangle().fill(AppStyle.line).frame(height: 1) }
                 }.fixedSize().padding(.vertical, 6)
             }.accessibilityIdentifier("notebookPolynomialTable")
-            NotebookAnswer(text: s.result.formula.replacingOccurrences(of: "α", with: variable))
-        }
-    }
-    private func math(_ text: String) -> some View { MathText(text: text).fixedSize().padding(.vertical, 3) }
+            .sheet(item:$scaling){step in StudyWorkView(work:.equations("Подготовка верхней ячейки",["\(step.factor) · \(s.base.vector())",step.rawVector,"≡ \(step.reducedVector) (mod \(s.p))"]))}
+
+}
+ private func math(_ text:String)->some View{MathText(text:text).fixedSize().padding(.vertical,3)}
 }
