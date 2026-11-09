@@ -19,8 +19,8 @@ final class WatchSmokeTests: XCTestCase {
         let intersection = element.frame.intersection(viewport)
         return !intersection.isNull && intersection.height > 12 ? intersection : nil
     }
-    @MainActor private func reach(_ app: XCUIApplication, _ id: String) {
-        for _ in 0..<45 { if visibleRow(app,find(app,id)) != nil { return }; advance(app) }
+    @MainActor private func reach(_ app: XCUIApplication, _ id: String, attempts: Int = 45) {
+        for _ in 0..<attempts { if visibleRow(app,find(app,id)) != nil { return }; advance(app) }
         XCTFail("Row is outside the list viewport: "+id)
     }
     @MainActor private func tapRow(_ app: XCUIApplication, _ id: String) {
@@ -40,6 +40,63 @@ final class WatchSmokeTests: XCTestCase {
     @MainActor private func otherTasks(_ app: XCUIApplication) {
         tapRow(app,"watchOtherTasks")
         XCTAssertEqual(find(app,"watchOtherTasks").value as? String,"Развернуто")
+    }
+    @MainActor func testCompactOrderWithExpandableReasons() {
+        let app=XCUIApplication();app.launchArguments=["--watch-theme","dark"];app.launch()
+        tapRow(app,"task_order");XCTAssertTrue(find(app,"studentSolution").waitForExistence(timeout:15))
+        XCTAssertFalse(find(app,"orderSplit").exists);XCTAssertFalse(find(app,"orderLCMGCD_0").exists)
+        XCTAssertTrue(find(app,"orderDivisors_5_part_0").label.contains("d(4)"))
+        XCTAssertTrue(find(app,"orderLCM_part_0").label.contains("НОК("))
+        for id in ["orderLiftCandidates_25","orderLiftResult_125"] {
+            XCTAssertFalse(find(app,id+"_explanationContent").exists)
+            tapRow(app,id+"_explanation")
+            XCTAssertTrue(find(app,id+"_explanationContent").waitForExistence(timeout:8))
+            capture("Часы — раскрытое пояснение "+id)
+            // Opening a reason keeps the same toggle in place on the main sheet.
+            tapRow(app,id+"_explanation")
+            XCTAssertFalse(find(app,id+"_explanationContent").exists)
+        }
+        XCTAssertEqual(find(app,"answer_order").label,"100");capture("Часы — компактная запись возвращена")
+    }
+    @MainActor func testOrderLectureAndDarkTheme() {
+        let app=XCUIApplication();app.launchArguments=["--watch-theme","light"];app.launch()
+        let toggle=app.buttons["watchTheme"].firstMatch
+        XCTAssertTrue(toggle.waitForExistence(timeout:10));XCTAssertEqual(toggle.label,"Включить тёмную тему")
+        toggle.tap();XCTAssertEqual(toggle.label,"Включить светлую тему");capture("Часы — тёмные задачи")
+        tapRow(app,"task_order")
+        XCTAssertTrue(find(app,"studentSolution").waitForExistence(timeout:15))
+        capture("Часы — тёмный лист порядка")
+        XCTAssertTrue(find(app,"orderLiftResult_125").exists)
+        XCTAssertEqual(find(app,"answer_order").label,"100")
+        tapMath(app,"orderPrime_5_power_2_work_0")
+        XCTAssertTrue(find(app,"notebookIntegerTable").waitForExistence(timeout:8));capture("Часы — тёмная таблица умножения")
+        find(app,"closeStudentDetail").tap()
+        reach(app,"orderLCM_reason");advance(app);advance(app);capture("Часы — НОК и НОД одной строкой")
+        app.terminate();app.launchArguments=[];app.launch()
+        XCTAssertEqual(app.buttons["watchTheme"].firstMatch.label,"Включить светлую тему")
+        find(app,"watchTab_definitions").tap();capture("Часы — тёмный каталог определений")
+        tapRow(app,"reference_order")
+        XCTAssertTrue(find(app,"definitionPaper").waitForExistence(timeout:8));capture("Часы — тёмное определение")
+        app.terminate();app.launchArguments=["--watch-theme","light"];app.launch()
+        XCTAssertEqual(app.buttons["watchTheme"].firstMatch.label,"Включить тёмную тему")
+        tapRow(app,"task_order");XCTAssertTrue(find(app,"studentSolution").waitForExistence(timeout:15));capture("Часы — светлый лист порядка")
+    }
+    @MainActor func testDarkProofAndCases() {
+        for (section,query,entry,paper) in [("1","Кармайкла","carmichael","definitionPaper"),("2","египетского","egyptian-algebraic","theoremPaper")] {
+            let app=XCUIApplication();app.launchArguments=["--watch-theme","dark","--watch-section",section];app.launchEnvironment["WATCH_REFERENCE_QUERY"]=query;app.launch()
+            tapRow(app,"reference_"+entry)
+            XCTAssertTrue(find(app,paper).waitForExistence(timeout:8));capture("Часы — тёмный лист "+entry)
+            pageAction(app,section == "1" ? "definitionExplanation" : "theoremExplanation","Разбор")
+            XCTAssertTrue(find(app,"studentDetailSheet").waitForExistence(timeout:8));capture("Часы — тёмный разбор "+entry)
+            find(app,"closeStudentDetail").tap();app.terminate()
+        }
+    }
+    @MainActor func testThemeButtonInBothAppearances() {
+        let app=XCUIApplication();app.launchArguments=["--watch-theme","light"];app.launch()
+        let button=app.buttons["watchTheme"].firstMatch
+        XCTAssertTrue(button.waitForExistence(timeout:10));capture("Часы — светлая тема и луна")
+        button.tap();XCTAssertEqual(button.label,"Включить светлую тему");capture("Часы — тёмная тема и солнце")
+        button.tap();XCTAssertEqual(button.label,"Включить тёмную тему")
     }
     @MainActor func testWatchLaunchesWithPrimaryTasks() {
         let app = XCUIApplication(); app.launch()
@@ -82,7 +139,7 @@ final class WatchSmokeTests: XCTestCase {
     }
     @MainActor func testDefinitionAndTheoremKeepWhiteSheetsAndSources() {
         for (section, entry, paper, sourceButton) in [("1","residue-system","definitionPaper","definitionSources"),("2","egyptian-algebraic","theoremPaper","theoremSources")] {
-            let app = XCUIApplication(); app.launchArguments = ["--watch-section", section]; app.launch()
+            let app = XCUIApplication(); app.launchArguments = ["--watch-theme","light","--watch-section", section]; app.launch()
             XCTAssertTrue(find(app,"reference_"+entry).waitForExistence(timeout:15)); tapRow(app,"reference_"+entry)
             XCTAssertTrue(find(app,paper).waitForExistence(timeout:8)); capture("Часы — "+paper)
             XCTAssertFalse(find(app,"referenceCorrection").exists)
@@ -220,6 +277,44 @@ final class WatchSmokeTests: XCTestCase {
         }
     }
 
+    @MainActor func testCubicShanksShowsOrderProofAndModuli() {
+        let app=XCUIApplication();app.launchArguments=["--watch-theme","dark"];app.launch();tapRow(app,"task_tonelli")
+        XCTAssertTrue(find(app,"tonelliCriterion_square_2").waitForExistence(timeout:15))
+        XCTAssertEqual(find(app,"tonelliCriterion_square_2_part_2").label,"Сравнимо по модулю 163")
+        XCTAssertTrue(find(app,"tonelliCubicOrderProof").exists)
+        XCTAssertTrue(find(app,"tonelliCubicVerification_2").exists)
+        XCTAssertTrue(find(app,"tonelliCubicVerification_2_square_work_2").exists)
+        XCTAssertTrue(find(app,"tonelliCubicVerification_2_work_4").exists)
+        XCTAssertEqual(find(app,"tonelliCubicVerification_2_part_2").label,"124^{2} · 124")
+        XCTAssertTrue(find(app,"tonelliCubicCompleteness").exists)
+        XCTAssertEqual(find(app,"answer_tonelli").label,"19, 20, 124")
+        reach(app,"tonelliCriterion_square_2_reason");capture("Часы — модуль над знаком сравнения")
+    }
+    @MainActor func testQuadraticShanksUsesActualOrders() {
+        let app=XCUIApplication();app.launchArguments=["--watch-theme","dark"];app.launch();tapRow(app,"task_tonelli")
+        XCTAssertTrue(find(app,"studentSolution").waitForExistence(timeout:15))
+        pageAction(app,"courseInput","Изменить условие")
+        reach(app,"Примеры с пары");app.buttons["Примеры с пары"].firstMatch.tap();tapRow(app,"tonelliExample_2_15_17")
+        reach(app,"courseSolve");find(app,"courseSolve").tap()
+        XCTAssertTrue(find(app,"tonelliInitialOrder").waitForExistence(timeout:15))
+        XCTAssertTrue(find(app,"tonelliCorrectedOrder_0_part_0").label.contains("= 2"))
+        XCTAssertTrue(find(app,"tonelliCorrectedOrder_1_part_0").label.contains("= 1"))
+        XCTAssertFalse(find(app,"tonelliK").exists);XCTAssertFalse(find(app,"tonelliB").exists)
+        XCTAssertEqual(find(app,"tonelliCorrected_0_part_1").label,"Сравнимо по модулю 17")
+        XCTAssertEqual(find(app,"answer_tonelli").label,"7, 10")
+        reach(app,"tonelliInitialOrder_reason");capture("Часы — порядок исходного элемента 8")
+        reach(app,"tonelliCorrectedOrder_0_reason",attempts:90);capture("Часы — после первой корректировки порядок 2")
+    }
+    @MainActor func testShanksReusesWrittenSquares() {
+        let app=XCUIApplication();app.launchArguments=["--watch-theme","dark"];app.launch();tapRow(app,"task_tonelli")
+        XCTAssertTrue(find(app,"tonelliCriterion_square_2").waitForExistence(timeout:15))
+        XCTAssertFalse(find(app,"tonelliInitial").exists)
+        XCTAssertFalse(find(app,"tonelliInitial_square_2").exists)
+        XCTAssertTrue(find(app,"tonelliOrder_0").exists)
+        XCTAssertTrue(find(app,"tonelliExtract").exists)
+        XCTAssertEqual(find(app,"answer_tonelli").label,"19, 20, 124")
+        reach(app,"tonelliCriterion_square_2_reason");capture("Часы — исходный квадрат записан один раз")
+    }
     @MainActor func testTonelliLectureDescentAndSharedExamples() {
         let app=XCUIApplication();app.launch();tapRow(app,"task_tonelli")
         XCTAssertTrue(find(app,"tonelliCriterion_square_2").waitForExistence(timeout:15))

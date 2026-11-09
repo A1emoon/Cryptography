@@ -15,6 +15,7 @@ struct WatchFullPageMarker: ViewModifier {
     }
 }
 struct WatchRootView: View {
+    @AppStorage("watchDarkTheme") private var darkTheme = false
     @State private var selected = 0
     #if DEBUG
     @State private var debugSource: ReferenceSourceSelection?
@@ -30,17 +31,26 @@ struct WatchRootView: View {
                 }
             }.toolbar {
                 if navigation.pages.isEmpty {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button { darkTheme.toggle() } label: {
+                            Image(systemName: darkTheme ? "sun.max.fill" : "moon.fill").foregroundStyle(.white)
+                        }.accessibilityIdentifier("watchTheme")
+                            .accessibilityLabel(darkTheme ? "Включить светлую тему" : "Включить тёмную тему")
+                            .accessibilityValue(darkTheme ? "Тёмная" : "Светлая")
+                    }
                     ToolbarItem(placement: .bottomBar) { tab(0, "Задачи", "square.grid.2x2", "tasks") }
                     ToolbarItem(placement: .bottomBar) { tab(1, "Опр.", "text.book.closed", "definitions") }
                     ToolbarItem(placement: .bottomBar) { tab(2, "Теоремы", "graduationcap", "theorems") }
                 }
             }
-        }.onAppear {
+        }.id(darkTheme).preferredColorScheme(darkTheme ? .dark : .light)
+            .environment(\.colorScheme, darkTheme ? .dark : .light).onAppear {
             #if DEBUG
             if let i = ProcessInfo.processInfo.arguments.firstIndex(of: "--watch-section"), ProcessInfo.processInfo.arguments.count > i+1 {
                 selected = Int(ProcessInfo.processInfo.arguments[i+1]) ?? 0
             }
             let args = ProcessInfo.processInfo.arguments
+            if let i = args.firstIndex(of: "--watch-theme"), args.count > i+1 { darkTheme = args[i+1] == "dark" }
             if let i = args.firstIndex(of: "--watch-source"), args.count > i+1, CourseLibrary.shared.source(args[i+1]) != nil {
                 var pages: [Int]? = nil
                 if let j = args.firstIndex(of: "--watch-pages"), args.count > j+1 { pages = args[j+1].split(separator: ",").compactMap { Int($0) } }

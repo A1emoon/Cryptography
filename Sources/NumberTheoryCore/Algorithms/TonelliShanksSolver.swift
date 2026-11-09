@@ -12,6 +12,26 @@ struct TonelliDescent: Identifiable, Sendable {
     let correction: RecordedPower
     let bExponentAfter: UInt64
 }
+/// One actual correction of a^r b^C, with its exact order before and after.
+struct TonelliQuadraticCorrection: Identifiable, Sendable {
+    let id: Int
+    let valueBefore: UInt64
+    let orderBefore: UInt64
+    let bExponentBefore: UInt64
+    let increment: UInt64
+    let bExponentAfter: UInt64
+    let factor: RecordedPower
+    let totalFactor: RecordedPower
+    let valueAfter: UInt64
+    let orderAfter: UInt64
+    let orderTests: [RecordedPower]
+}
+struct TonelliCubicVerification: Sendable {
+    let root: UInt64
+    let exactCube: Natural
+    let quotient: Natural
+    let remainder: Natural
+}
 struct TonelliSolution: Sendable {
     let input: DecimalInteger
     let a: UInt64
@@ -32,6 +52,10 @@ struct TonelliSolution: Sendable {
     var B: UInt64?
     var unityPowers: [RecordedPower] = []
     var descents: [TonelliDescent] = []
+    var quadraticCorrections: [TonelliQuadraticCorrection] = []
+    var nonResidueInitial: RecordedPower?
+    var nonResidueOrderTests: [RecordedPower] = []
+    var initialOrder: UInt64 { orderTests.last?.exponent ?? 1 }
     var identityBExponent: UInt64 = 0
     var rootMultiplier: UInt64 = 1
     var rootAPower: RecordedPower?
@@ -40,6 +64,7 @@ struct TonelliSolution: Sendable {
     var orderedRoots: [UInt64] = []
     var roots: [UInt64] = []
     var verification: [RecordedPower] = []
+    var cubicVerifications: [TonelliCubicVerification] = []
     var steps: [NumberStep] = []
 }
 
@@ -59,6 +84,15 @@ enum TonelliShanksSolver {
                 try RecordedPower.calculate($0.element, degree, p, id: "root_\($0.offset)", check: check)
             }
             guard result.verification.allSatisfy({ $0.result == a }) else { throw NumberTheoryError.invariant }
+            if n == 3 {
+                result.cubicVerifications = try result.roots.map { root in
+                    try check()
+                    let cube=Natural(root)*Natural(root)*Natural(root)
+                    let division=try cube.divided(by:Natural(p),check:check)
+                    guard division.remainder == Natural(a) else { throw NumberTheoryError.invariant }
+                    return TonelliCubicVerification(root:root,exactCube:cube,quotient:division.quotient,remainder:division.remainder)
+                }
+            }
             return result
         }
         if a == 0 { result.seedRoot = 0; return try finish([0]) }
@@ -114,7 +148,48 @@ enum TonelliShanksSolver {
             guard result.unityPowers.last?.result == 1, B != 1 else { throw NumberTheoryError.invariant }
         }
         var A = r * max(1, order / degree), C: UInt64 = 0
-        if result.orderExponent > 0 {
+        if n == 2 {
+            A = r
+            if order > 1 {
+                guard let b = result.nonResidue else { throw NumberTheoryError.invariant }
+                let bInitial = try RecordedPower.calculate(b,r,p,id:"nonresidue_initial",check:check)
+                result.nonResidueInitial = bInitial
+                let bOrder = UInt64(1) << s
+                var exponent: UInt64 = 1, bValue = bInitial.result
+                while bValue != 1 {
+                    try check()
+                    guard exponent < bOrder else { throw NumberTheoryError.invariant }
+                    exponent *= 2
+                    let test = try RecordedPower.calculate(bInitial.result,exponent,p,id:"nonresidue_order_\(exponent)",check:check)
+                    result.nonResidueOrderTests.append(test); bValue = test.result
+                }
+                guard exponent == bOrder else { throw NumberTheoryError.invariant }
+                var current = initial.result, currentOrder = order
+                while current != 1 {
+                    try check()
+                    let half = currentOrder/2
+                    guard half > 0, try Mod64.power(current,half,p,check:check) == p-1 else { throw NumberTheoryError.invariant }
+                    let increment = (p-1)/currentOrder
+                    let factor = try RecordedPower.calculate(b,increment,p,id:"correction_\(result.quadraticCorrections.count)",check:check)
+                    let nextValue = Mod64.multiply(current,factor.result,p)
+                    let nextExponent = C.addingReportingOverflow(increment)
+                    guard !nextExponent.overflow, nextExponent.partialValue <= p-1,
+                          increment % 2 == 0, try Mod64.power(nextValue,half,p,check:check) == 1 else { throw NumberTheoryError.invariant }
+                    // Measure the actual smaller order, rather than descending one level at a time.
+                    var nextOrder: UInt64 = 1, testValue = nextValue, tests: [RecordedPower] = []
+                    while testValue != 1 {
+                        try check()
+                        guard nextOrder < half else { throw NumberTheoryError.invariant }
+                        nextOrder *= 2
+                        let test = try RecordedPower.calculate(nextValue,nextOrder,p,id:"corrected_order_\(nextOrder)",check:check)
+                        tests.append(test); testValue = test.result
+                    }
+                    guard nextOrder < currentOrder else { throw NumberTheoryError.invariant }
+                    result.quadraticCorrections.append(TonelliQuadraticCorrection(id:result.quadraticCorrections.count,valueBefore:current,orderBefore:currentOrder,bExponentBefore:C,increment:increment,bExponentAfter:nextExponent.partialValue,factor:factor,totalFactor:try RecordedPower.calculate(b,nextExponent.partialValue,p,id:"total_factor",check:check),valueAfter:nextValue,orderAfter:nextOrder,orderTests:tests))
+                    C = nextExponent.partialValue; current = nextValue; currentOrder = nextOrder
+                }
+            }
+        } else if result.orderExponent > 0 {
             guard let b = result.nonResidue, let B = result.B else { throw NumberTheoryError.invariant }
             let E = (p - 1) / degree
             for level in stride(from: result.orderExponent - 1, through: 0, by: -1) {

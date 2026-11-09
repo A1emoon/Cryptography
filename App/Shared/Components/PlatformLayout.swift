@@ -21,19 +21,26 @@ extension View {
     }
     @ViewBuilder func coursePaperNavigation() -> some View {
         #if os(watchOS)
-        self.modifier(WatchFullPageMarker()).toolbarBackground(Color.white, for: .navigationBar)
+        self.modifier(WatchFullPageMarker()).toolbarBackground(AppStyle.referencePaper, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
         #else
         self.toolbar(.hidden, for: .tabBar)
-            .toolbarBackground(Color.white, for: .navigationBar)
+            .toolbarBackground(AppStyle.referencePaper, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
         #endif
     }
     @ViewBuilder func courseSolutionAppearance() -> some View {
         #if os(watchOS)
-        self.modifier(WatchFullPageMarker()).background(Color.white).foregroundStyle(Color.black).environment(\.colorScheme, .light)
+        self.modifier(WatchFullPageMarker()).background(AppStyle.paper).foregroundStyle(AppStyle.paperInk).environment(\.colorScheme, AppStyle.watchScheme)
         #else
         self.background(AppStyle.paper)
+        #endif
+    }
+    @ViewBuilder func courseReferenceAppearance() -> some View {
+        #if os(watchOS)
+        self.background(AppStyle.referencePaper).foregroundStyle(AppStyle.paperInk).environment(\.colorScheme, AppStyle.watchScheme)
+        #else
+        self.background(Color.white).foregroundStyle(Color.black).environment(\.colorScheme, .light)
         #endif
     }
     @ViewBuilder func courseCatalogStyle() -> some View {

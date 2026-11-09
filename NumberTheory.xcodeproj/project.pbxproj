@@ -66,11 +66,13 @@
 				<string>016E2338C1A3524660B8D40B</string>
 				<string>809DC6962B49214EEAC1424B</string>
 				<string>5D6F3FE3C3DB6B3F242EF889</string>
+				<string>B4B2F5C96F5E367F14F8DC17</string>
 				<string>92BB9F3B3F5A72B72040B0DE</string>
 				<string>10AA16A4EB73DA961DF3BF95</string>
 				<string>7C326BD92EBB74F01A3D1CB6</string>
 				<string>491B283F5C809C454AFDD367</string>
 				<string>B56C2DF84730F20F75ACDF6D</string>
+				<string>6884EA960AB1F8746A8F83A4</string>
 				<string>433CC0C397539A91289A7CCD</string>
 			</array>
 			<key>isa</key>
@@ -567,6 +569,13 @@
 			<key>name</key>
 			<string>Debug</string>
 		</dict>
+		<key>2C1B40DA31A3D0087C2AD72B</key>
+		<dict>
+			<key>fileRef</key>
+			<string>B664F253E2F8857B8C9B190E</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
 		<key>2C59F59A6912126C2AFA8A18</key>
 		<dict>
 			<key>children</key>
@@ -835,6 +844,7 @@
 				<string>CB65F1F4B07BF32580F3FCF2</string>
 				<string>5DAB23E35F91C8998582E9B7</string>
 				<string>1C62514A5C3E04857EBD431F</string>
+				<string>9447F618E4CBDA0BE1A49FFD</string>
 				<string>9441E3DB8365F509AD72C743</string>
 				<string>ACB506B8B0536B61775B78D0</string>
 				<string>2EF577591505CA825B2CB1B8</string>
@@ -1624,6 +1634,17 @@
 			<key>isa</key>
 			<string>PBXBuildFile</string>
 		</dict>
+		<key>6884EA960AB1F8746A8F83A4</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>net.daringfireball.markdown</string>
+			<key>path</key>
+			<string>Documentation/TONELLI_LECTURE.md</string>
+			<key>sourceTree</key>
+			<string>SOURCE_ROOT</string>
+		</dict>
 		<key>68B693ABB9D67EE8A4FEC096</key>
 		<dict>
 			<key>isa</key>
@@ -2239,6 +2260,13 @@
 			<key>isa</key>
 			<string>PBXBuildFile</string>
 		</dict>
+		<key>9447F618E4CBDA0BE1A49FFD</key>
+		<dict>
+			<key>fileRef</key>
+			<string>B664F253E2F8857B8C9B190E</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
 		<key>9461C3DAC01EE28D15EC1B82</key>
 		<dict>
 			<key>isa</key>
@@ -2325,6 +2353,7 @@
 				<string>4694CD3A736E187937B41D61</string>
 				<string>67F141F3787F92C548CD5F9E</string>
 				<string>B10292C8DB4B3CE6E030197C</string>
+				<string>2C1B40DA31A3D0087C2AD72B</string>
 				<string>09166AEE644CA05A9DA52138</string>
 				<string>87714FDDD5F004430414ACE3</string>
 				<string>76A2F7F587B608D658805D53</string>
@@ -2733,6 +2762,17 @@
 			<key>productType</key>
 			<string>com.apple.product-type.bundle.ui-testing</string>
 		</dict>
+		<key>B4B2F5C96F5E367F14F8DC17</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>net.daringfireball.markdown</string>
+			<key>path</key>
+			<string>Documentation/ORDER_LECTURE.md</string>
+			<key>sourceTree</key>
+			<string>SOURCE_ROOT</string>
+		</dict>
 		<key>B56C2DF84730F20F75ACDF6D</key>
 		<dict>
 			<key>isa</key>
@@ -2779,6 +2819,17 @@
 			<string>63F7ADC1563FA439C0923F91</string>
 			<key>isa</key>
 			<string>PBXBuildFile</string>
+		</dict>
+		<key>B664F253E2F8857B8C9B190E</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.swift</string>
+			<key>path</key>
+			<string>Sources/NumberTheoryCore/Presentation/OrderLecture.swift</string>
+			<key>sourceTree</key>
+			<string>SOURCE_ROOT</string>
 		</dict>
 		<key>B7F8D999443B7FE51FCA52C4</key>
 		<dict>
@@ -3529,6 +3580,7 @@
 			<key>children</key>
 			<array>
 				<string>B90CA4BDDE3064A4CEC32560</string>
+				<string>B664F253E2F8857B8C9B190E</string>
 				<string>33FFCF206B56D7F46D8BEC24</string>
 				<string>758F6F29F7DA9379F4F4A59B</string>
 			</array>

@@ -10,15 +10,81 @@ final class NumberTheoryUITests:XCTestCase {
 
  @MainActor private func open(_ app:XCUIApplication,_ id:String){app.launch();scroll(app,"task_"+id);find(app,"task_"+id).tap();XCTAssertTrue(find(app,"studentSolution").waitForExistence(timeout:15))}
  @MainActor private func solve(_ app:XCUIApplication){scroll(app,"courseSolve");find(app,"courseSolve").tap();XCTAssertTrue(find(app,"studentSolution").waitForExistence(timeout:15))}
+ @MainActor func testCompactOrderWithExpandableReasons()throws{
+  let app=XCUIApplication();open(app,"order")
+  XCTAssertFalse(find(app,"orderSplit").exists);XCTAssertFalse(find(app,"orderLCMGCD_0").exists)
+        XCTAssertTrue(find(app,"orderDivisors_5_part_0").label.contains("d(4)"))
+        XCTAssertTrue(find(app,"orderLCM_part_0").label.contains("НОК("))
+  let candidates="orderLiftCandidates_25",growth="orderLiftResult_125"
+  for id in [candidates,growth] {
+   XCTAssertFalse(find(app,id+"_explanationContent").exists)
+   scroll(app,id+"_explanation");let button=app.buttons[id+"_explanation"].firstMatch
+   XCTAssertEqual(button.value as? String,"Свернуто");button.tap()
+   XCTAssertTrue(find(app,id+"_explanationContent").waitForExistence(timeout:5))
+   capture("Порядок — раскрытое пояснение "+id)
+   scroll(app,id+"_explanation",down:true);button.tap()
+   XCTAssertFalse(find(app,id+"_explanationContent").exists)
+  }
+  XCTAssertEqual(find(app,"answer_order").label,"100");capture("Порядок — компактная запись возвращена")
+ }
  @MainActor func testFirstTasksOrderAndNestedCalculation()throws{
-  let app=XCUIApplication();app.launch();capture("Задачи — приоритетные три")
-  XCTAssertTrue(find(app,"task_inverse").isHittable);XCTAssertTrue(find(app,"task_order").exists);XCTAssertTrue(find(app,"task_tonelli").exists)
-  find(app,"task_order").tap();XCTAssertTrue(find(app,"studentSolution").waitForExistence(timeout:15))
-  XCTAssertFalse(app.segmentedControls["solutionStyle"].exists)
-  find(app,"orderFactorization_work_0").tap();XCTAssertTrue(app.staticTexts["Разложение модуля"].waitForExistence(timeout:5));capture("Порядок — факторизация отдельно");close(app)
-  scroll(app,"order_trial_5_4_2_0_work_1")
-  find(app,"order_trial_5_4_2_0_work_1").tap();XCTAssertTrue(app.staticTexts["Вспомогательное вычисление степени"].waitForExistence(timeout:5));close(app)
-  scroll(app,"answer_order");XCTAssertEqual(find(app,"answer_order").label,"100");capture("Порядок — НОК и ответ")
+  let app=XCUIApplication();open(app,"order")
+  XCTAssertTrue(find(app,"orderPrime_2").exists)
+  XCTAssertTrue(find(app,"orderDivisors_5").exists)
+  XCTAssertTrue(find(app,"orderLiftCandidates_25").exists)
+  XCTAssertTrue(find(app,"orderLift_25_power_4").exists)
+  XCTAssertFalse(find(app,"orderFactorization_work_0").exists)
+  capture("Порядок — запись по простым степеням")
+  scroll(app,"orderPrime_5_power_2_work_0");find(app,"orderPrime_5_power_2_work_0").tap()
+  XCTAssertTrue(find(app,"notebookIntegerTable").waitForExistence(timeout:8));capture("Порядок — умножение на полях");close(app)
+  scroll(app,"orderLCM_reason");capture("Порядок — НОК и НОД, итог 100")
+  XCTAssertEqual(find(app,"answer_order").label,"100")
+  find(app,"courseInput").tap();find(app,"courseExamples").tap();app.buttons["Практика · P₈₁₂₅(37)"].tap();solve(app)
+  XCTAssertTrue(find(app,"orderPrime_13_power_6").exists)
+  XCTAssertTrue(find(app,"orderLiftResult_625").exists)
+  XCTAssertEqual(find(app,"answer_order").label,"1500")
+  scroll(app,"orderPrime_13_power_2_reason");capture("Порядок — проверки делителей по модулю 13")
+ }
+ @MainActor func testCubicShanksShowsOrderProofAndModuli()throws{
+  let app=XCUIApplication();open(app,"tonelli")
+  XCTAssertTrue(find(app,"tonelliCubicOrderProof").exists)
+  XCTAssertTrue(find(app,"tonelliCubicVerification_2").exists)
+  XCTAssertTrue(find(app,"tonelliCubicCompleteness").exists)
+  XCTAssertEqual(find(app,"tonelliCriterion_square_2_part_2").label,"Сравнимо по модулю 163")
+  XCTAssertEqual(find(app,"answer_tonelli").label,"19, 20, 124")
+  scroll(app,"tonelliCubicOrderProof_reason");capture("Кубический Шенкс — доказанный порядок перед k")
+  XCTAssertTrue(find(app,"tonelliCubicVerification_2_square_work_2").exists)
+  XCTAssertEqual(find(app,"tonelliCubicVerification_2_part_2").label,"124^{2} · 124")
+  scroll(app,"tonelliCubicVerification_2_square_reason");capture("Кубический Шенкс — квадрат перед кубом 124")
+  scroll(app,"tonelliCubicVerification_2_work_4");find(app,"tonelliCubicVerification_2_work_4").tap()
+  XCTAssertTrue(find(app,"notebookIntegerTable").waitForExistence(timeout:8));capture("Кубический Шенкс — умножение 15376 на 124");close(app)
+  scroll(app,"tonelliCubicVerification_2_reason");capture("Кубический Шенкс — проверка корней и полнота")
+ }
+ @MainActor func testQuadraticShanksMatchesLectureCorrections()throws{
+  let app=XCUIApplication();open(app,"tonelli")
+  find(app,"courseInput").tap();find(app,"courseExamples").tap();find(app,"tonelliExample_2_15_17").tap();solve(app)
+  XCTAssertTrue(find(app,"tonelliInitialOrder_part_0").label.contains("= 8"))
+  XCTAssertTrue(find(app,"tonelliCorrectedOrder_0_part_0").label.contains("= 2"))
+  XCTAssertTrue(find(app,"tonelliCorrectedOrder_1_part_0").label.contains("= 1"))
+  XCTAssertFalse(find(app,"tonelliK").exists);XCTAssertFalse(find(app,"tonelliB").exists)
+  XCTAssertEqual(find(app,"tonelliCorrected_0_part_1").label,"Сравнимо по модулю 17")
+  XCTAssertEqual(find(app,"answer_tonelli").label,"7, 10")
+  scroll(app,"tonelliCorrected_0_reason");capture("Шенкс — первая корректировка и фактический порядок 2")
+  scroll(app,"tonelliCorrected_1_reason");capture("Шенкс — вторая корректировка и порядок 1")
+  scroll(app,"tonelliVerification_1_reason");capture("Шенкс — корни 7 и 10 с проверкой")
+ }
+ @MainActor func testShanksDoesNotRepeatTheSameSquare()throws{
+  let app=XCUIApplication();open(app,"tonelli")
+  find(app,"courseInput").tap();app.segmentedControls["rootDegree"].buttons["x²"].tap()
+  replace(app,"input_a","15");replace(app,"input_p","17");solve(app)
+  XCTAssertTrue(find(app,"tonelliOrder_0").exists)
+  XCTAssertFalse(find(app,"tonelliOrder_0_square_2").exists)
+  XCTAssertEqual(find(app,"tonelliOrder_0_part_0").label,"15 в степени 2")
+  XCTAssertEqual(find(app,"tonelliOrder_0_part_1").label,"Сравнимо по модулю 17")
+  XCTAssertEqual(find(app,"answer_tonelli").label,"7, 10")
+  scroll(app,"tonelliOrder_0_reason");capture("Шенкс — квадрат одной цепочкой без повтора")
+  scroll(app,"tonelliOrder_0_work_2");find(app,"tonelliOrder_0_work_2").tap()
+  XCTAssertTrue(find(app,"notebookIntegerTable").waitForExistence(timeout:8));close(app)
  }
  @MainActor func testTonelliCubeSquareAndReasons()throws{
   let app=XCUIApplication();open(app,"tonelli")

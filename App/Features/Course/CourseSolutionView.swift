@@ -168,35 +168,52 @@ private struct CoursePolynomialInverseSolution:View {
         }else{StudyLine(id:"polyInverseMissing",atoms:[.text("НОД(A, M) = \(s.gcd.formula) ≠ 1")],reason:StudyReason(title:"Обратного нет",text:"Неконстантный общий делитель не позволяет получить 1 как линейную комбинацию A и M.",references:["polynomial-inverse-exists"]))}
     }
 }
-private struct CourseOrderSolution:View {
-    let s:OrderSolution
-    var body:some View {
-        StudyLine(id:"orderCondition",atoms:[.text("P\(RabinFormat.index(String(s.modulus)))(\(s.input)) = ?")],reason:StudyReason(title:"Мультипликативный порядок",text:"Ищем наименьший положительный показатель t, для которого aᵗ ≡ 1 по m. Порядок определён только для взаимно простых a и m.",references:["order"]))
-        StudyLine(id:"orderGCD",atoms:[.text("НОД(\(s.a), \(s.modulus)) = \(s.gcd)")],reason:StudyReason(title:"Проверка существования",text:s.gcd==1 ? "Число обратимо по модулю, поэтому порядок существует.":"Общий делитель больше 1. Ни одна положительная степень a не может быть равна 1 по этому модулю.",references:["order-divisibility"]))
-        if s.order != nil {
-            StudyLine(id:"orderFactorization",atoms:[.text("\(s.modulus) = \(s.factorization.expression)")],reason:StudyReason(title:"Разложение модуля",text:"Считаем локальные порядки по простым степеням и объединяем их через НОК. Факторизация выполняется автоматически; её деления открываются отдельно.",references:["order-crt"]),works:[0:.factorization(s.factorization)])
-            ForEach(s.steps){CourseNumberStep(step:$0,prefix:"order")}
-        }
+private struct CourseOrderSolution: View {
+    let s: OrderSolution
+    var body: some View {
+        ForEach(s.writing) { line in CourseOrderLine(line:line) }
     }
 }
-struct CourseNumberStep:View {
-    let step:NumberStep
-    let prefix:String
-    private func display(_ text:String)->String {
-        guard prefix=="order",let regex=try? NSRegularExpression(pattern:"P([0-9]+)\\(") else{return text}
-        var value=text
-        for m in regex.matches(in:text,range:NSRange(text.startIndex...,in:text)).reversed(){if let range=Range(m.range(at:1),in:value),let n=UInt64(value[range]){value.replaceSubrange(range,with:RabinFormat.index(String(n)))}}
-        return value
-    }
-    var body:some View {
-        ForEach(step.equations.indices,id:\.self){i in
-            let equation=step.equations[i]
-            let match=step.powers.first{equation.contains($0.expression)}
-            if let match,let range=equation.range(of:match.expression){
-                StudyLine(id:"\(prefix)_\(step.id)_\(i)",atoms:[.text(display(String(equation[..<range.lowerBound]))),.power(String(match.base),String(match.exponent)),.text(display(String(equation[range.upperBound...])))],reason:StudyReason(title:"Почему эта строка верна",text:step.explanation,references:step.theorem.map{[$0]} ?? []),works:[1:.power(match)])
-            }else{
-                StudyLine(id:"\(prefix)_\(step.id)_\(i)",atoms:[.text(display(equation))],reason:StudyReason(title:"Почему эта строка верна",text:step.explanation,references:step.theorem.map{[$0]} ?? []))
+private struct CourseOrderLine: View {
+    let line: OrderLectureLine
+    @State private var expanded = false
+    var body: some View {
+        VStack(alignment:.leading,spacing:6) {
+            StudyLine(id:line.id,atoms:line.atoms.map(atom),reason:StudyReason(title:"Почему эта строка верна",text:line.explanation,references:line.references),works:line.products.mapValues { product in
+                func factor(_ n: UInt64) -> String { n > product.modulus/2 ? "−\(product.modulus-n)" : String(n) }
+                let first = line.atoms.first
+                let isOriginalSquare: Bool = { if case .rich(let text) = first { return text == "\(product.a)^{2}" }; return false }()
+                return .product(isOriginalSquare ? String(product.a) : factor(product.a),isOriginalSquare ? String(product.b) : factor(product.b),String(product.modulus))
+            },singleRow:true)
+            if let detail=line.detail {
+                Button { expanded.toggle() } label: {
+                    HStack(spacing:6) {
+                        Image(systemName:expanded ? "chevron.down" : "chevron.right").font(.caption2)
+                        Text(detail.title).font(.footnote).fixedSize(horizontal:false,vertical:true)
+                    }.frame(maxWidth:.infinity,alignment:.leading).padding(.vertical,5).contentShape(Rectangle())
+                }.buttonStyle(.plain).foregroundStyle(AppStyle.accent)
+                    .accessibilityIdentifier(line.id+"_explanation")
+                    .accessibilityValue(expanded ? "Развернуто" : "Свернуто")
+                if expanded {
+                    VStack(alignment:.leading,spacing:12) {
+                        ForEach(detail.blocks.indices,id:\.self) { i in
+                            switch detail.blocks[i] {
+                            case .text(let text): DefinitionMathText(text:text,size:AppStyle.isWatch ? 14 : 16)
+                            case .formula(let atoms): StudentFormulaView(atoms:atoms.map(atom))
+                            }
+                        }
+                        ReferenceLinks(ids:detail.references,prefix:line.id+"_detailReference_")
+                    }.padding(.leading,8).accessibilityElement(children:.contain)
+                        .accessibilityIdentifier(line.id+"_explanationContent")
+                }
             }
+        }
+    }
+    private func atom(_ atom: OrderLectureAtom) -> StudentMathAtom {
+        switch atom {
+        case .rich(let value): .rich(value)
+        case .congruence(let modulus,let unequal): .congruence(String(modulus),unequal:unequal)
+        case .fraction(let a,let b): .fraction(a,b)
         }
     }
 }

@@ -154,7 +154,7 @@ struct TonelliLectureExample: Identifiable {
         return value
     }
     static let all = [
-        Self(a:"5",p:"41",degree:2), Self(a:"6",p:"97",degree:2),
+        Self(a:"15",p:"17",degree:2), Self(a:"5",p:"41",degree:2), Self(a:"6",p:"97",degree:2),
         Self(a:"3",p:"73",degree:3), Self(a:"13",p:"163",degree:3),
         Self(a:"17",p:"163",degree:3), Self(a:"267",p:"487",degree:3), Self(a:"26",p:"487",degree:3)
     ]

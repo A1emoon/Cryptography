@@ -33,7 +33,7 @@ struct CourseTaskView:View {
         case .tonelli(let s):s.roots.isEmpty ? "Решений нет" : "x ∈ {"+s.roots.map(String.init).joined(separator:", ")+"} (mod \(s.p))"
         case .polynomial(let s):s.result.formula
         case .polynomialInverse(let s):s.inverse.map{"A⁻¹ ≡ "+$0.formula+" (mod (M, \(s.p)))"} ?? "Обратного многочлена нет"
-        case .order(let s):s.order.map{"P"+RabinFormat.index(String(s.modulus))+"(\(s.a)) = \($0)"} ?? "Мультипликативный порядок не существует"
+        case .order(let s):s.order.map{"P"+RabinFormat.index(String(s.modulus))+"(\(s.input)) = \($0)"} ?? "Мультипликативный порядок не существует"
         default:r.answer
         }
     }

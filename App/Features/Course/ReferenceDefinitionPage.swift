@@ -27,8 +27,7 @@ struct ReferenceDefinitionPage: View {
             }.frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, AppStyle.pagePadding).padding(.top, AppStyle.paperTop).padding(.bottom, 44)
                 .accessibilityElement(children: .contain).accessibilityIdentifier("definitionPaper")
-        }.background(Color.white).foregroundStyle(Color.black)
-            .environment(\.colorScheme, .light)
+        }.courseReferenceAppearance()
             .navigationTitle("").navigationBarTitleDisplayMode(.inline)
             .coursePaperNavigation()
             .toolbar { CoursePageTools(firstTitle: "Источники", firstIcon: "books.vertical", firstID: "definitionSources", firstAction: { sources = true }, secondTitle: "Разбор", secondIcon: "text.bubble", secondID: "definitionExplanation", secondAction: { explanation = true }) }
@@ -73,13 +72,13 @@ private struct DefinitionBlockView: View {
             VStack(alignment: .leading, spacing: 14) {
                 DefinitionFormula(atoms: block.prefix)
                 HStack(spacing: 6) {
-                    DefinitionBracket(curly: true).stroke(Color.black, lineWidth: 1.3).frame(width: 12)
+                    DefinitionBracket(curly: true).stroke(AppStyle.paperInk, lineWidth: 1.3).frame(width: 12)
                     DefinitionFormula(atoms: block.atoms, wraps: false)
                     Rectangle().frame(width: 1)
                     VStack(alignment: .leading, spacing: 12) {
                         ForEach(block.rows.indices, id: \.self) { index in DefinitionFormula(atoms: block.rows[index].value) }
                     }
-                    DefinitionBracket(curly: true).stroke(Color.black, lineWidth: 1.3).frame(width: 12).scaleEffect(x: -1, y: 1)
+                    DefinitionBracket(curly: true).stroke(AppStyle.paperInk, lineWidth: 1.3).frame(width: 12).scaleEffect(x: -1, y: 1)
                 }.fixedSize(horizontal: false, vertical: true)
                     .accessibilityElement(children: .contain).accessibilityIdentifier("definitionSet")
             }
@@ -107,13 +106,13 @@ private struct DefinitionBlockView: View {
     }
     private var setContents: some View {
         HStack(spacing: 6) {
-            DefinitionBracket(curly: true).stroke(Color.black, lineWidth: 1.3).frame(width: 12)
+            DefinitionBracket(curly: true).stroke(AppStyle.paperInk, lineWidth: 1.3).frame(width: 12)
             DefinitionFormula(atoms: block.atoms, wraps: false)
             Rectangle().frame(width: 1)
             VStack(alignment: .leading, spacing: 12) {
                 ForEach(block.rows.indices, id: \.self) { index in DefinitionFormula(atoms: block.rows[index].value) }
             }
-            DefinitionBracket(curly: true).stroke(Color.black, lineWidth: 1.3).frame(width: 12).scaleEffect(x: -1, y: 1)
+            DefinitionBracket(curly: true).stroke(AppStyle.paperInk, lineWidth: 1.3).frame(width: 12).scaleEffect(x: -1, y: 1)
         }.fixedSize(horizontal: true, vertical: false)
     }
     private var rows: some View {
@@ -128,7 +127,7 @@ private struct DefinitionBlockView: View {
         }.padding(.leading, block.bracket == "brace" ? 21 : 14)
             .padding(.vertical, 8)
             .background(alignment: .leading) {
-                DefinitionBracket(curly: block.bracket == "brace").stroke(Color.black, lineWidth: 1.3).frame(width: block.bracket == "brace" ? 15 : 8)
+                DefinitionBracket(curly: block.bracket == "brace").stroke(AppStyle.paperInk, lineWidth: 1.3).frame(width: block.bracket == "brace" ? 15 : 8)
             }
             .accessibilityElement(children: .contain)
             .accessibilityIdentifier(block.bracket == "brace" ? "definitionSystem" : "definitionCases")
@@ -202,7 +201,7 @@ private struct DefinitionAtom: View {
         case "underProduct":
             VStack(spacing: 1) {
                 DefinitionAtom(atom: ReferenceAtom(kind: "product", a: atom.a, b: atom.b, c: atom.c), size: size)
-                DefinitionUnderBracket().stroke(Color.black, lineWidth: 1).frame(height: 8)
+                DefinitionUnderBracket().stroke(AppStyle.paperInk, lineWidth: 1).frame(height: 8)
                 DefinitionMathText(text: "Q", size: size*0.7)
             }.fixedSize()
         case "productSymbol":

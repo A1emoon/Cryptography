@@ -1,6 +1,7 @@
 import SwiftUI
 
 enum StudentMathAtom {
+    case congruence(String, unequal: Bool = false)
     case text(String)
     case rich(String)
     case floorFraction(String,String)
@@ -10,6 +11,7 @@ enum StudentMathAtom {
     case fractionPower(String, String, String)
     var spoken: String {
         switch self {
+        case .congruence(let m, let unequal): "\(unequal ? "Не сравнимо" : "Сравнимо") по модулю \(m)"
         case .text(let text): text
         case .rich(let text): text
         case .floorFraction(let a,let b): "Целая часть \(a), делённое на \(b)"
@@ -40,6 +42,8 @@ private struct StudentMathToken: View {
     let action: () -> Void
     @ViewBuilder private var mathematicalText: some View {
         switch atom {
+        case .congruence(let m, let unequal):
+            VStack(spacing: -2) { Text(m).font(.system(size: 11, design: .serif)); Text(unequal ? "≢" : "≡").font(AppStyle.math) }.padding(.bottom, 11)
         case .text(let text): MathText(text: text)
         case .rich(let text): ReferenceMathText(text:text)
         case .floorFraction(let a,let b): FloorFractionView(numerator:a,denominator:b)
@@ -220,14 +224,14 @@ struct StudentDetailSheet<Content: View>: View {
                     Text(title).font(AppStyle.isWatch ? .headline : .title2.weight(.semibold)).accessibilityAddTraits(.isHeader)
                     content()
                 }.frame(maxWidth: .infinity, alignment: .leading).padding(AppStyle.contentPadding)
-            }.background(AppStyle.isWatch ? Color.white : AppStyle.background)
+            }.background(AppStyle.isWatch ? AppStyle.paper : AppStyle.background)
                 .navigationTitle(AppStyle.isWatch ? "" : "К записи решения").navigationBarTitleDisplayMode(.inline)
                 .toolbar { ToolbarItem(placement: .confirmationAction) {
                     Button("Готово") { dismiss() }.accessibilityIdentifier("closeStudentDetail").courseToolbarControl()
                 } }
         }
         #if os(watchOS)
-        .background(Color.white).foregroundStyle(Color.black).environment(\.colorScheme, .light)
+        .background(AppStyle.paper).foregroundStyle(AppStyle.paperInk).environment(\.colorScheme, AppStyle.watchScheme)
         #endif
         .accessibilityIdentifier("studentDetailSheet")
         .presentationDetents(large ? [.large] : [.medium, .large]).presentationDragIndicator(.visible)

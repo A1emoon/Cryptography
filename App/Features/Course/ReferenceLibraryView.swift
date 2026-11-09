@@ -117,8 +117,7 @@ struct ReferenceTheoremPage: View {
         ScrollView {
             ReferenceWrittenProofView(entry: entry)
                 .padding(.horizontal, AppStyle.pagePadding).padding(.top, AppStyle.paperTop).padding(.bottom, 44)
-        }.background(Color.white).foregroundStyle(Color.black)
-            .environment(\.colorScheme, .light)
+        }.courseReferenceAppearance()
             .navigationTitle("").navigationBarTitleDisplayMode(.inline)
             .coursePaperNavigation()
             .toolbar { CoursePageTools(firstTitle: "Источники", firstIcon: "books.vertical", firstID: "theoremSources", firstAction: { sources = true }, secondTitle: "Разбор", secondIcon: "text.bubble", secondID: "theoremExplanation", secondAction: { explanation = true }) }
@@ -176,7 +175,7 @@ struct ReferenceEntrySheet: View {
                     Button("Готово") { dismiss() }.accessibilityIdentifier("closeStudentDetail")
                 } }
         }.presentationDetents([.large]).presentationDragIndicator(.visible)
-            .environment(\.colorScheme, .light)
+            .courseReferenceAppearance()
     }
 }
 struct ReferenceArticleContent: View {
